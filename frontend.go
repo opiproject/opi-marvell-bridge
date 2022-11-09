@@ -17,15 +17,19 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+type server string
+
+var MrvlFrontendNvmeService server
+
 // ////////////////////////////////////////////////////////
 var subsystems = map[string]*pb.NVMeSubsystem{}
 
 func (s *server) NVMeSubsystemCreate(ctx context.Context, in *pb.NVMeSubsystemCreateRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("NVMeSubsystemCreate: Received from client: %v", in)
 	params := MrvlNvmCreateSubsystemParams{
-		Nqn:          in.GetSubsystem().GetNqn(),
-		SerialNumber: "SPDK0",
-		AllowAnyHost: true,
+		SubNqn:       in.GetSubsystem().GetNqn(),
+		ModelNo: 	  "OpiModel0",
+		SerialNo:     "OpiSerial0",
 	}
 	var result MrvlNvmCreateSubsystemResult
 	err := call("mrvl_nvm_create_subsystem", &params, &result)
@@ -35,6 +39,9 @@ func (s *server) NVMeSubsystemCreate(ctx context.Context, in *pb.NVMeSubsystemCr
 	}
 	subsystems[in.Subsystem.Id.Value] = in.Subsystem
 	log.Printf("Received from SPDK: %v", result)
+	if result.Status != 0 {
+		log.Printf("Could not create: %v", in)
+	}
 	response := &pb.NVMeSubsystem{}
 	err = deepcopier.Copy(in.Subsystem).To(response)
 	if err != nil {
@@ -52,17 +59,17 @@ func (s *server) NVMeSubsystemDelete(ctx context.Context, in *pb.NVMeSubsystemDe
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	params := NvmfDeleteSubsystemParams{
-		Nqn: subsys.Nqn,
+	params := MrvlNvmDeleteSubsystemParams{
+		SubNqn: subsys.Nqn,
 	}
-	var result NvmfDeleteSubsystemResult
+	var result MrvlNvmDeleteSubsystemResult
 	err := call("mrvl_nvm_deletesubsystem", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	if !result {
+	if result.Status != 0 {
 		log.Printf("Could not delete: %v", in)
 	}
 	delete(subsystems, subsys.Id.Value)
@@ -71,29 +78,26 @@ func (s *server) NVMeSubsystemDelete(ctx context.Context, in *pb.NVMeSubsystemDe
 
 func (s *server) NVMeSubsystemUpdate(ctx context.Context, in *pb.NVMeSubsystemUpdateRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("NVMeSubsystemUpdate: Received from client: %v", in)
-	subsystems[in.Subsystem.Id.Value] = in.Subsystem
-	response := &pb.NVMeSubsystem{}
-	err := deepcopier.Copy(in.Subsystem).To(response)
-	if err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	return response, nil
+	return nil, status.Errorf(codes.Unimplemented, "NVMeSubsystemUpdate method is not implemented")
 }
 
 func (s *server) NVMeSubsystemList(ctx context.Context, in *pb.NVMeSubsystemListRequest) (*pb.NVMeSubsystemListResponse, error) {
 	log.Printf("NVMeSubsystemList: Received from client: %v", in)
-	var result []MrvvNvmGetSubsysListResult
+	var result MrvvNvmGetSubsysListResult
 	err := call("mrvl_nvm_get_subsys_list", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	Blobarray := make([]*pb.NVMeSubsystem, len(result))
-	for i := range result {
+	if result.Status != 0 {
+		log.Printf("Could not create: %v", in)
+	}
+
+	Blobarray := make([]*pb.NVMeSubsystem, len(result.SubsysList))
+	for i := range result.SubsysList {
 		r := &result[i]
-		Blobarray[i] = &pb.NVMeSubsystem{Nqn: r.Nqn}
+		Blobarray[i] = &pb.NVMeSubsystem{Nqn: r.SubNqn}
 	}
 	return &pb.NVMeSubsystemListResponse{Subsystem: Blobarray}, nil
 }
@@ -106,20 +110,21 @@ func (s *server) NVMeSubsystemGet(ctx context.Context, in *pb.NVMeSubsystemGetRe
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-
-	// TODO: replace with MRVL code
-	var result []NvmfGetSubsystemsResult
-	err := call("nvmf_get_subsystems", nil, &result)
+	// TODO: replace with MRVL code : mrvl_nvm_subsys_get_info ?
+	var result MrvvNvmGetSubsysListResult
+	err := call("mrvl_nvm_get_subsys_list", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-
-	for i := range result {
-		r := &result[i]
-		if r.Nqn == subsys.Nqn {
-			return &pb.NVMeSubsystem{Nqn: r.Nqn}, nil
+	if result.Status != 0 {
+		log.Printf("Could not get: %v", in)
+	}
+	for i := range result.SubsysList {
+		r := &result.SubsysList[i]
+		if r.SubNqn == subsys.Nqn {
+			return &pb.NVMeSubsystem{Nqn: r.SubNqn}, nil
 		}
 	}
 	msg := fmt.Sprintf("Could not find NQN: %s", subsys.Nqn)
@@ -129,15 +134,26 @@ func (s *server) NVMeSubsystemGet(ctx context.Context, in *pb.NVMeSubsystemGetRe
 
 func (s *server) NVMeSubsystemStats(ctx context.Context, in *pb.NVMeSubsystemStatsRequest) (*pb.NVMeSubsystemStatsResponse, error) {
 	log.Printf("NVMeSubsystemStats: Received from client: %v", in)
-	// TODO: replace with MRVL code
-	var result NvmfGetSubsystemStatsResult
-	err := call("nvmf_get_stats", nil, &result)
+	subsys, ok := subsystems[in.SubsystemId.Value]
+	if !ok {
+		err := fmt.Errorf("unable to find key %s", in.SubsystemId)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	params := MrvlNvmGetSubsysInfoParams{
+		SubNqn: subsys.Nqn,
+	}
+	var result MrvlNvmGetSubsysInfoResult
+	err := call("mrvl_nvm_subsys_get_info", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	return &pb.NVMeSubsystemStatsResponse{Stats: fmt.Sprint(result.TickRate)}, nil
+	if result.Status != 0 {
+		log.Printf("Could not get stats: %v", in)
+	}
+	return &pb.NVMeSubsystemStatsResponse{Stats: "TBD"}, nil
 }
 
 // ////////////////////////////////////////////////////////

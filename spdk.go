@@ -21,10 +21,34 @@ type MrvlNvmCreateSubsystemResult struct {
 	Status int `json:"status"`
 }
 
+type MrvlNvmDeleteSubsystemParams struct {
+	SubNqn        string `json:"subnqn"`
+}
+
+type MrvlNvmDeleteSubsystemResult struct {
+	Status int `json:"status"`
+}
+
 type MrvvNvmGetSubsysListResult struct {
 	Status     int `json:"status"`
 	SubsysList []struct {
 		SubNqn string `json:"subnqn"`
+	} `json:"subsys_list"`
+}
+
+type MrvlNvmGetSubsysInfoParams struct {
+	SubNqn        string `json:"subnqn"`
+}
+
+type MrvlNvmGetSubsysInfoResult struct {
+	Status int `json:"status"`
+	SubsysList []struct {
+		SubNqn string `json:"subnqn"`
+		ModelNo       string `json:"mn"`
+		SerialNo      string `json:"sn"`
+		MaxNamespaces int    `json:"max_namespaces"`
+		MinCtrlId     int    `json:"min_ctrlr_id"`
+		MaxCtrlId     int    `json:"max_ctrlr_id"`
 	} `json:"subsys_list"`
 }
 
