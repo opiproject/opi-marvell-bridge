@@ -72,6 +72,31 @@ type MrvlNvmSubsysGetCtrlrListResult struct {
 	} `json:"ctrlr_id_list"`
 }
 
+type MrvlNvmGetCtrlrInfoParams struct {
+	SubNqn  string `json:"subnqn"`
+	CtrlrId int `json:"ctrlr_id"`
+}
+
+type MrvlNvmGetCtrlrInfoResult struct {
+	Status        int `json:"status"`
+	PcieDomainId  int `json:"pcie_domain_id"`
+	PfId          int `json:"pf_id"`
+	VfId          int `json:"vf_id"`
+	CtrlrId       int `json:"ctrlr_id"`
+	MaxNsq        int `json:"max_nsq"`
+	MaxNcq        int `json:"max_ncq"`
+	Mqes          int `json:"mqes"`
+	IeeeOui       string `json:"005043"`
+	Cmic          int `json:"cmic"`
+	Nn            int `json:"nn"`
+	ActiveNsCount int `json:"active_ns_count"`
+	ActiveNsq     int `json:"active_nsq"`
+	ActiveNcq     int `json:"active_ncq"`
+	Mdts          int `json:"mdts"`
+	Sqes          int `json:"sqes"`
+	Cqes          int `json:"cqes"`
+}
+
 type MrvlNvmSubsysRemoveCtrlrParams struct {
 	Subnqn  string `json:"subnqn"`
 	CtrlrId int    `json:"ctrlr_id"`
@@ -79,6 +104,26 @@ type MrvlNvmSubsysRemoveCtrlrParams struct {
 
 type MrvlNvmSubsysRemoveCtrlrResult struct {
 	Status int `json:"status"`
+}
+
+type MrvlNvmGetCtrlrStatsParams struct {
+	SubNqn  string `json:"subnqn"`
+	CtrlrId int `json:"ctrlr_id"`
+}
+
+type MrvlNvmGetCtrlrStatsResult struct {
+	Status                int `json:"status"`
+	NumAdminCmds          int `json:"num_admin_cmds"`
+	NumAdminCmdErrors     int `json:"num_admin_cmd_errors"`
+	NumAsyncEvents        int `json:"num_async_events"`
+	NumReadCmds           int `json:"num_read_cmds"`
+	NumReadBytes          int `json:"num_read_bytes"`
+	NumWriteCmds          int `json:"num_write_cmds"`
+	NumWriteBytes         int `json:"num_write_bytes"`
+	NumErrors             int `json:"num_errors"`
+	TotalReadLatencyInUs  int `json:"total_read_latency_in_us"`
+	TotalWriteLatencyInUs int `json:"total_write_latency_in_us"`
+	StatsTimeWindowInUs   int `json:"stats_time_window_in_us"`
 }
 
 type MrvlNvmSubsysAllocNsParams struct {
