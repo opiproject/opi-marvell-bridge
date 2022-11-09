@@ -355,99 +355,66 @@ func (s *server) NVMeNamespaceDelete(ctx context.Context, in *pb.NVMeNamespaceDe
 }
 
 func (s *server) NVMeNamespaceUpdate(ctx context.Context, in *pb.NVMeNamespaceUpdateRequest) (*pb.NVMeNamespace, error) {
-	log.Printf("Received from client: %v", in.Namespace)
-	namespaces[in.Namespace.Id.Value] = in.Namespace
-	response := &pb.NVMeNamespace{}
-	// TODO: replace with MRVL code
-	err := deepcopier.Copy(in.Namespace).To(response)
-	if err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	return response, nil
+	log.Printf("NVMeNamespaceUpdate: Received from client: %v", in)
+	return nil, status.Errorf(codes.Unimplemented, "NVMeNamespaceUpdate method is not implemented")
 }
 
 func (s *server) NVMeNamespaceList(ctx context.Context, in *pb.NVMeNamespaceListRequest) (*pb.NVMeNamespaceListResponse, error) {
 	log.Printf("NVMeNamespaceList: Received from client: %v", in)
-	var result []NvmfGetSubsystemsResult
-	err := call("mrvl_nvm_subsys_get_ns_list", nil, &result)
+	params := MrvlNvmSubsysGetNsListParams{
+		Subnqn: in.SubsystemId.Value,
+	}
+	var result MrvlNvmSubsysGetNsListResult
+	err := call("mrvl_nvm_subsys_get_ns_list", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-
-	Blobarray := []*pb.NVMeNamespace{}
-	for i := range result {
-		rr := &result[i]
-		if rr.Nqn == nqn || nqn == "" {
-			for j := range rr.Namespaces {
-				r := &rr.Namespaces[j]
-				Blobarray = append(Blobarray, &pb.NVMeNamespace{HostNsid: int32(r.Nsid)})
-			}
-		}
+	if result.Status != 0 {
+		log.Printf("Could not delete: %v", in)
 	}
-	if len(Blobarray) > 0 {
-		return &pb.NVMeNamespaceListResponse{Namespace: Blobarray}, nil
+	Blobarray := make([]*pb.NVMeNamespace, len(result.NsList))
+	for i := range result.NsList {
+		r := &result.NsList[i]
+		Blobarray[i] = &pb.NVMeNamespace{HostNsid: int32(r.NsInstanceID)}
 	}
-
-	msg := fmt.Sprintf("Could not find any namespaces for NQN: %s", nqn)
-	log.Print(msg)
-	return nil, status.Errorf(codes.InvalidArgument, msg)
+	return &pb.NVMeNamespaceListResponse{Namespace: Blobarray}, nil
 }
 
 func (s *server) NVMeNamespaceGet(ctx context.Context, in *pb.NVMeNamespaceGetRequest) (*pb.NVMeNamespace, error) {
 	log.Printf("NVMeNamespaceGet: Received from client: %v", in)
-	// TODO: replace with MRVL code
-	namespace, ok := namespaces[in.NamespaceId.Value]
-	if !ok {
-		err := fmt.Errorf("unable to find key %s", in.NamespaceId.Value)
-		log.Printf("error: %v", err)
-		return nil, err
+	params := MrvlNvmGetNsInfoParams{
+		SubNqn: in.GetNamespaceId().GetValue(),
 	}
-	// TODO: do we even query SPDK to confirm if namespace is present?
-	// return namespace, nil
-
-	// fetch subsystems -> namespaces from server, match the nsid to find the corresponding namespace
-	subsys, ok := subsystems[namespace.SubsystemId.Value]
-	if !ok {
-		err := fmt.Errorf("unable to find subsystem %s", namespace.SubsystemId.Value)
-		log.Printf("error: %v", err)
-		// TODO: temp workaround
-		subsys = &pb.NVMeSubsystem{Nqn: namespace.SubsystemId.Value}
-		// return nil, err
-	}
-
-	var result []NvmfGetSubsystemsResult
-	err := call("nvmf_get_subsystems", nil, &result)
+	var result MrvlNvmGetNsInfoResult
+	err := call("mrvl_nvm_ns_get_info", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	// TODO: replace with MRVL code
 	log.Printf("Received from SPDK: %v", result)
-	for i := range result {
-		rr := &result[i]
-		if rr.Nqn == subsys.Nqn {
-			for j := range rr.Namespaces {
-				r := &rr.Namespaces[j]
-				if int32(r.Nsid) == namespace.HostNsid {
-					return &pb.NVMeNamespace{Id: namespace.Id, HostNsid: namespace.HostNsid}, nil
-				}
-			}
-			msg := fmt.Sprintf("Could not find NSID: %d", namespace.HostNsid)
-			log.Print(msg)
-			return nil, status.Errorf(codes.InvalidArgument, msg)
-		}
+	if result.Status != 0 {
+		log.Printf("Could not get stats: %v", in)
 	}
-	msg := fmt.Sprintf("Could not find NQN: %s", subsys.Nqn)
-	log.Print(msg)
-	return nil, status.Errorf(codes.InvalidArgument, msg)
+	return &pb.NVMeNamespace{Id: in.NamespaceId, Nguid: result.Nguid}, nil
 }
 
 func (s *server) NVMeNamespaceStats(ctx context.Context, in *pb.NVMeNamespaceStatsRequest) (*pb.NVMeNamespaceStatsResponse, error) {
-	log.Printf("Received from client: %v", in.NamespaceId)
-	// TODO: replace with MRVL code : mrvl_nvm_ctrlr_get_ns_stats
-	return &pb.NVMeNamespaceStatsResponse{}, nil
+	log.Printf("NVMeNamespaceStats: Received from client: %v", in)
+	params := MrvlNvmGetNsStatsParams{
+		SubNqn: in.GetNamespaceId().GetValue(),
+	}
+	var result MrvlNvmGetNsStatsResult
+	err := call("mrvl_nvm_ns_get_stats", &params, &result)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	log.Printf("Received from SPDK: %v", result)
+	if result.Status != 0 {
+		log.Printf("Could not get stats: %v", in)
+	}
+	return &pb.NVMeNamespaceStatsResponse{Stats: "TBD"}, nil
 }
 

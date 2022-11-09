@@ -169,3 +169,53 @@ type MrvlNvmCtrlrDetachNsParams struct {
 type MrvlNvmCtrlrDetachNsResult struct {
 	Status int `json:"status"`
 }
+
+type MrvlNvmSubsysGetNsListParams struct {
+	Subnqn string `json:"subnqn"`
+}
+
+type MrvlNvmSubsysGetNsListResult struct {
+	Status      int `json:"status"`
+	NsList []struct {
+		NsInstanceID int    `json:"ns_instance_id"`
+		Bdev         string `json:"bdev"`
+		CtrlrIDList  []struct {
+			CtrlrID int `json:"ctrlr_id"`
+		} `json:"ctrlr_id_list"`
+	} `json:"ns_list"`
+}
+
+type MrvlNvmGetNsStatsParams struct {
+	SubNqn       string `json:"subnqn"`
+	NsInstanceID int    `json:"ns_instance_id"`
+}
+
+type MrvlNvmGetNsStatsResult struct {
+	Status                int `json:"status"`
+	NumReadCmds           int `json:"num_read_cmds"`
+	NumReadBytes          int `json:"num_read_bytes"`
+	NumWriteCmds          int `json:"num_write_cmds"`
+	NumWriteBytes         int `json:"num_write_bytes"`
+	NumErrors             int `json:"num_errors"`
+	TotalReadLatencyInUs  int `json:"total_read_latency_in_us"`
+	TotalWriteLatencyInUs int `json:"total_write_latency_in_us"`
+	StatsTimeWindowInUs   int `json:"Stats_time_window_in_us"`
+}
+
+type MrvlNvmGetNsInfoParams struct {
+	SubNqn       string `json:"subnqn"`
+	NsInstanceID int    `json:"ns_instance_id"`
+}
+
+type MrvlNvmGetNsInfoResult struct {
+	Status      int    `json:"status"`
+	Nguid       string `json:"nguid"`
+	Eui64       string `json:"eui64"`
+	UUID        string `json:"uuid"`
+	Nmic        int    `json:"nmic"`
+	Bdev        string `json:"bdev"`
+	NumCtrlrs   int    `json:"num_ctrlrs"`
+	CtrlrIDList []struct {
+		CtrlrID int `json:"ctrlr_id"`
+	} `json:"ctrlr_id_list"`
+}
