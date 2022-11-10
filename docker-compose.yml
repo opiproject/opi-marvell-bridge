@@ -15,6 +15,14 @@ services:
       - opi
     command: /opi-marvell-bridge -port=50051
 
+  opi-test:
+    image: namely/grpc-cli
+    networks:
+      - opi
+    depends_on:
+      - opi-marvell-server
+    command: ls opi-marvell-server:50051 opi_api.storage.v1.FrontendNvmeService -l
+
   opi-client:
     image: "ghcr.io/opiproject/opi-storage-client:main"
     networks:
