@@ -13,4 +13,8 @@ RUN go mod download
 
 # build an app
 COPY *.go ./
-RUN go build -v -buildmode=plugin -o /opi-marvell-bridge.so ./...
+RUN go build -v -o /opi-marvell-bridge && CGO_ENABLED=0 go test -v ./...
+RUN go build -v -buildmode=plugin -o /opi-marvell-bridge.so ./frontend.go ./spdk.go ./jsonrpc.go
+
+EXPOSE 50051
+CMD [ "/opi-marvell-bridge" ]
