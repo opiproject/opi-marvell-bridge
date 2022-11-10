@@ -13,15 +13,17 @@ services:
       - "50051:50051"
     networks:
       - opi
-    # command: /opi-marvell-bridge -port=50051
     command: go run main.go -port=50051
+    healthcheck:
+      test: grpcurl -plaintext localhost:50051 list || exit 1
 
   opi-test:
     image: namely/grpc-cli
     networks:
       - opi
     depends_on:
-      - opi-marvell-server
+      opi-marvell-server:
+        condition: service_healthy
     command: ls opi-marvell-server:50051 opi_api.storage.v1.FrontendNvmeService -l
 
   opi-client:
