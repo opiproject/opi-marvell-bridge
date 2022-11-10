@@ -17,9 +17,9 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-type server string
+type server struct {}
 
-var MrvlFrontendNvmeService server
+var FrontendNvme server
 
 // ////////////////////////////////////////////////////////
 var subsystems = map[string]*pb.NVMeSubsystem{}
