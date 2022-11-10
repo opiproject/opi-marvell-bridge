@@ -25,31 +25,32 @@ go build -v -buildmode=plugin -o /opi-marvell-bridge.so ./...
 ```go
 package main
 import (
+    "context"
     "fmt"
     "os"
     "plugin"
+    pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 )
-type FrontendNvme interface
-    Name() string
-    Version() string
-    NVMeSubsystemCreate(in *pb.NVMeSubsystemCreateRequest) (*pb.NVMeSubsystem, error)
-    NVMeSubsystemDelete(in *pb.NVMeSubsystemDeleteRequest) (*emptypb.Empty, error)
-    NVMeSubsystemUpdate(in *pb.NVMeSubsystemUpdateRequest) (*pb.NVMeSubsystem, error)
-    NVMeSubsystemList(in *pb.NVMeSubsystemListRequest) (*pb.NVMeSubsystemListResponse, error)
-    NVMeSubsystemGet(in *pb.NVMeSubsystemGetRequest) (*pb.NVMeSubsystem, error)
-    NVMeSubsystemStats(in *pb.NVMeSubsystemStatsRequest) (*pb.NVMeSubsystemStatsResponse, error)
-    NVMeControllerCreate(in *pb.NVMeControllerCreateRequest) (*pb.NVMeController, error)
-    NVMeControllerDelete(in *pb.NVMeControllerDeleteRequest) (*emptypb.Empty, error)
-    NVMeControllerUpdate(in *pb.NVMeControllerUpdateRequest) (*pb.NVMeController, error)
-    NVMeControllerList(in *pb.NVMeControllerListRequest) (*pb.NVMeControllerListResponse, error)
-    NVMeControllerGet(in *pb.NVMeControllerGetRequest) (*pb.NVMeController, error)
-    NVMeControllerStats(in *pb.NVMeControllerStatsRequest) (*pb.NVMeControllerStatsResponse, error)
-    NVMeNamespaceCreate(in *pb.NVMeNamespaceCreateRequest) (*pb.NVMeNamespace, error)
-    NVMeNamespaceDelete(in *pb.NVMeNamespaceDeleteRequest) (*emptypb.Empty, error)
-    NVMeNamespaceUpdate(in *pb.NVMeNamespaceUpdateRequest) (*pb.NVMeNamespace, error)
-    NVMeNamespaceList(in *pb.NVMeNamespaceListRequest) (*pb.NVMeNamespaceListResponse, error)
-    NVMeNamespaceGet(in *pb.NVMeNamespaceGetRequest) (*pb.NVMeNamespace, error)
-    NVMeNamespaceStats(in *pb.NVMeNamespaceStatsRequest) (*pb.NVMeNamespaceStatsResponse, error)
+// from https://github.com/opiproject/opi-api/blob/main/storage/v1alpha1/gen/go/frontend_nvme_pcie.pb.go#L3204
+type FrontendNvmeServiceServer interface {
+    NVMeSubsystemCreate(context.Context, *NVMeSubsystemCreateRequest) (*NVMeSubsystem, error)
+    NVMeSubsystemDelete(context.Context, *NVMeSubsystemDeleteRequest) (*emptypb.Empty, error)
+    NVMeSubsystemUpdate(context.Context, *NVMeSubsystemUpdateRequest) (*NVMeSubsystem, error)
+    NVMeSubsystemList(context.Context, *NVMeSubsystemListRequest) (*NVMeSubsystemListResponse, error)
+    NVMeSubsystemGet(context.Context, *NVMeSubsystemGetRequest) (*NVMeSubsystem, error)
+    NVMeSubsystemStats(context.Context, *NVMeSubsystemStatsRequest) (*NVMeSubsystemStatsResponse, error)
+    NVMeControllerCreate(context.Context, *NVMeControllerCreateRequest) (*NVMeController, error)
+    NVMeControllerDelete(context.Context, *NVMeControllerDeleteRequest) (*emptypb.Empty, error)
+    NVMeControllerUpdate(context.Context, *NVMeControllerUpdateRequest) (*NVMeController, error)
+    NVMeControllerList(context.Context, *NVMeControllerListRequest) (*NVMeControllerListResponse, error)
+    NVMeControllerGet(context.Context, *NVMeControllerGetRequest) (*NVMeController, error)
+    NVMeControllerStats(context.Context, *NVMeControllerStatsRequest) (*NVMeControllerStatsResponse, error)
+    NVMeNamespaceCreate(context.Context, *NVMeNamespaceCreateRequest) (*NVMeNamespace, error)
+    NVMeNamespaceDelete(context.Context, *NVMeNamespaceDeleteRequest) (*emptypb.Empty, error)
+    NVMeNamespaceUpdate(context.Context, *NVMeNamespaceUpdateRequest) (*NVMeNamespace, error)
+    NVMeNamespaceList(context.Context, *NVMeNamespaceListRequest) (*NVMeNamespaceListResponse, error)
+    NVMeNamespaceGet(context.Context, *NVMeNamespaceGetRequest) (*NVMeNamespace, error)
+    NVMeNamespaceStats(context.Context, *NVMeNamespaceStatsRequest) (*NVMeNamespaceStatsResponse, error)
 }
 func main()
     args := os.Args[1:]
@@ -64,22 +65,25 @@ func main()
         }
         // 2. Look for an exported symbol such as a function or variable
         // in our case we expect that every plugin will have exported a single struct
-        // that implements the FrontendNvme interface with the name "FrontendNvme"
-        frontendNvmeSymbol, err := plug.Lookup("FrontendNvme")
+        // that implements the FrontendNvmeServiceServer interface with the name "PluginFrontendNvme"
+        feNvmeSymbol, err := plug.Lookup("PluginFrontendNvme")
         if err != nil
             log.Fatal(err)
         }
-        // 3. Attempt to cast the symbol to the FrontendNvme
+        // 3. Attempt to cast the symbol to the FrontendNvmeServiceServer
         // this will allow us to call the methods on the plugins if the plugin
         // implemented the required methods or fail if it does not implement it.
-        var frontendNvme FrontendNvme
-        frontendNvme, ok := frontendNvmeSymbol.(FrontendNvme)
+        var frontendNvme pb.FrontendNvmeServiceServer
+        feNvme, ok := feNvmeSymbol.(pb.FrontendNvmeServiceServer)
         if !ok
-            log.Fatal("Invalid frontendNvme type")
+            log.Fatal("Invalid feNvme type")
         }
         // 4. If everything is ok from the previous assertions, then we can proceed
         // with calling the methods on our frontendNvme interface object
-        out, err := frontendNvme.NVMeSubsystemCreate(in)
+        out, err := feNvme.NVMeSubsystemCreate(in)
+        // OR (untested)
+        s := grpc.NewServer()
+        pb.RegisterFrontendNvmeServiceServer(s, &feNvme)
     }
 }
 ```
