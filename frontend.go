@@ -101,7 +101,7 @@ func (s *server) ListNVMeSubsystem(ctx context.Context, in *pb.ListNVMeSubsystem
 		r := &result.SubsysList[i]
 		Blobarray[i] = &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: r.Subnqn}}
 	}
-	return &pb.ListNVMeSubsystemResponse{Subsystem: Blobarray}, nil
+	return &pb.ListNVMeSubsystemResponse{Subsystems: Blobarray}, nil
 }
 
 func (s *server) GetNVMeSubsystem(ctx context.Context, in *pb.GetNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
@@ -251,7 +251,7 @@ func (s *server) ListNVMeController(ctx context.Context, in *pb.ListNVMeControll
 		r := &result.CtrlrIDList[i]
 		Blobarray[i] = &pb.NVMeController{Spec: &pb.NVMeControllerSpec{NvmeControllerId: int32(r.CtrlrID)}}
 	}
-	return &pb.ListNVMeControllerResponse{Controller: Blobarray}, nil
+	return &pb.ListNVMeControllerResponse{Controllers: Blobarray}, nil
 }
 
 func (s *server) GetNVMeController(ctx context.Context, in *pb.GetNVMeControllerRequest) (*pb.NVMeController, error) {
@@ -381,7 +381,7 @@ func (s *server) ListNVMeNamespace(ctx context.Context, in *pb.ListNVMeNamespace
 		r := &result.NsList[i]
 		Blobarray[i] = &pb.NVMeNamespace{Spec: &pb.NVMeNamespaceSpec{HostNsid: int32(r.NsInstanceID)}}
 	}
-	return &pb.ListNVMeNamespaceResponse{Namespace: Blobarray}, nil
+	return &pb.ListNVMeNamespaceResponse{Namespaces: Blobarray}, nil
 }
 
 func (s *server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
