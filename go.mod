@@ -1,4 +1,4 @@
-module opi.storage.v1
+module github.com/opiproject/opi-marvell-bridge
 
 go 1.19
 
