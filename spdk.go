@@ -53,7 +53,7 @@ type MrvlNvmCreateSubsystemParams struct {
 }
 
 type MrvlNvmCreateSubsystemResult struct {
-	Status     int `json:"status"`
+	Status int `json:"status"`
 }
 
 type MrvlNvmDeleteSubsystemParams struct {
@@ -61,13 +61,13 @@ type MrvlNvmDeleteSubsystemParams struct {
 }
 
 type MrvlNvmDeleteSubsystemResult struct {
-	Status     int `json:"status"`
+	Status int `json:"status"`
 }
 
 // MrvlNvmDeInitParams is empty
 
 type MrvlNvmDeInitResult struct {
-	Status     int `json:"status"`
+	Status int `json:"status"`
 }
 
 type MrvlNvmGetSubsysInfoParams struct {
@@ -157,7 +157,7 @@ type MrvlNvmSubsysUpdateCtrlrParams struct {
 }
 
 type MrvlNvmSubsysUpdateCtrlrResult struct {
-	Status  int `json:"status"`
+	Status int `json:"status"`
 }
 
 type MrvlNvmSubsysRemoveCtrlrParams struct {

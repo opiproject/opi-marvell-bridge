@@ -29,9 +29,9 @@ var subsystems = map[string]*pb.NVMeSubsystem{}
 func (s *server) NVMeSubsystemCreate(ctx context.Context, in *pb.NVMeSubsystemCreateRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("NVMeSubsystemCreate: Received from client: %v", in)
 	params := MrvlNvmCreateSubsystemParams{
-		Subnqn:        in.Subsystem.Spec.Nqn,
-		Mn:            "OpiModel0",
-		Sn:            "OpiSerial0",
+		Subnqn: in.Subsystem.Spec.Nqn,
+		Mn:     "OpiModel0",
+		Sn:     "OpiSerial0",
 	}
 	var result MrvlNvmCreateSubsystemResult
 	err := call("mrvl_nvm_create_subsystem", &params, &result)
@@ -302,7 +302,7 @@ func (s *server) NVMeNamespaceCreate(ctx context.Context, in *pb.NVMeNamespaceCr
 	log.Printf("NVMeNamespaceCreate: Received from client: %v", in)
 	params := MrvlNvmSubsysAllocNsParams{
 		Subnqn: in.Namespace.Spec.SubsystemId.Value,
-		Bdev: in.Namespace.Spec.VolumeId.Value,
+		Bdev:   in.Namespace.Spec.VolumeId.Value,
 	}
 
 	var result MrvlNvmSubsysAllocNsResult
@@ -342,8 +342,8 @@ func (s *server) NVMeNamespaceDelete(ctx context.Context, in *pb.NVMeNamespaceDe
 	}
 
 	params := MrvlNvmSubsysUnallocNsParams{
-		Subnqn:  		subsys.Spec.Nqn,
-		NsInstanceID:   int(namespace.Spec.HostNsid),
+		Subnqn:       subsys.Spec.Nqn,
+		NsInstanceID: int(namespace.Spec.HostNsid),
 	}
 	var result MrvlNvmSubsysUnallocNsResult
 	err := call(" mrvl_nvm_subsys_unalloc_ns", &params, &result)
@@ -419,4 +419,3 @@ func (s *server) NVMeNamespaceStats(ctx context.Context, in *pb.NVMeNamespaceSta
 	}
 	return &pb.NVMeNamespaceStatsResponse{Stats: "TBD"}, nil
 }
-
