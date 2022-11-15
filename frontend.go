@@ -199,8 +199,15 @@ func (s *server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 	if !ok {
 		return nil, fmt.Errorf("error finding controller %s", in.ControllerId.Value)
 	}
+	subsys, ok := subsystems[controller.Spec.SubsystemId.Value]
+	if !ok {
+		err := fmt.Errorf("unable to find key %s", controller.Spec.SubsystemId.Value)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+
 	params := MrvlNvmSubsysRemoveCtrlrParams{
-		Subnqn: controller.Spec.SubsystemId.Value,
+		Subnqn: subsys.Spec.Nqn,
 	}
 	var result MrvlNvmSubsysRemoveCtrlrResult
 	err := call("mrvl_nvm_subsys_remove_ctrlr", &params, &result)
@@ -273,8 +280,15 @@ func (s *server) GetNVMeController(ctx context.Context, in *pb.GetNVMeController
 	if !ok {
 		return nil, fmt.Errorf("error finding controller %s", in.ControllerId.Value)
 	}
+	subsys, ok := subsystems[controller.Spec.SubsystemId.Value]
+	if !ok {
+		err := fmt.Errorf("unable to find key %s", controller.Spec.SubsystemId.Value)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+
 	params := MrvlNvmGetCtrlrInfoParams{
-		Subnqn: controller.Spec.SubsystemId.Value,
+		Subnqn: subsys.Spec.Nqn,
 	}
 	var result MrvlNvmGetCtrlrInfoResult
 	err := call("mrvl_nvm_ctrlr_get_info", &params, &result)
@@ -296,8 +310,15 @@ func (s *server) NVMeControllerStats(ctx context.Context, in *pb.NVMeControllerS
 	if !ok {
 		return nil, fmt.Errorf("error finding controller %s", in.Id.Value)
 	}
+	subsys, ok := subsystems[controller.Spec.SubsystemId.Value]
+	if !ok {
+		err := fmt.Errorf("unable to find key %s", controller.Spec.SubsystemId.Value)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+
 	params := MrvlNvmGetCtrlrStatsParams{
-		Subnqn: controller.Spec.SubsystemId.Value,
+		Subnqn: subsys.Spec.Nqn,
 	}
 	var result MrvlNvmGetCtrlrStatsResult
 	err := call("mrvl_nvm_ctrlr_get_stats", &params, &result)
@@ -323,10 +344,12 @@ func (s *server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	// TODO: doo lookup through VolumeId key instead of using it's value
 	params := MrvlNvmSubsysAllocNsParams{
 		Subnqn: subsys.Spec.Nqn,
 		Bdev:   in.Namespace.Spec.VolumeId.Value,
 	}
+	// TODO: who is doing mrvl_nvm_ctrlr_attach_ns() ?
 	var result MrvlNvmSubsysAllocNsResult
 	err := call("mrvl_nvm_subsys_alloc_ns", &params, &result)
 	if err != nil {
@@ -420,8 +443,15 @@ func (s *server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRe
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	subsys, ok := subsystems[namespace.Spec.SubsystemId.Value]
+	if !ok {
+		err := fmt.Errorf("unable to find key %s", namespace.Spec.SubsystemId.Value)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+
 	params := MrvlNvmGetNsInfoParams{
-		SubNqn: namespace.Spec.SubsystemId.Value,
+		SubNqn: subsys.Spec.Nqn,
 	}
 	var result MrvlNvmGetNsInfoResult
 	err := call("mrvl_nvm_ns_get_info", &params, &result)
@@ -444,8 +474,15 @@ func (s *server) NVMeNamespaceStats(ctx context.Context, in *pb.NVMeNamespaceSta
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	subsys, ok := subsystems[namespace.Spec.SubsystemId.Value]
+	if !ok {
+		err := fmt.Errorf("unable to find key %s", namespace.Spec.SubsystemId.Value)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+
 	params := MrvlNvmGetNsStatsParams{
-		SubNqn: namespace.Spec.SubsystemId.Value,
+		SubNqn: subsys.Spec.Nqn,
 	}
 	var result MrvlNvmGetNsStatsResult
 	err := call("mrvl_nvm_ns_get_stats", &params, &result)
