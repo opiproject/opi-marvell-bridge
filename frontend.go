@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -28,10 +29,14 @@ var subsystems = map[string]*pb.NVMeSubsystem{}
 
 func (s *server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("CreateNVMeSubsystem: Received from client: %v", in)
+	// TODO: fix const values below
 	params := MrvlNvmCreateSubsystemParams{
-		Subnqn: in.Subsystem.Spec.Nqn,
-		Mn:     "OpiModel0",
-		Sn:     "OpiSerial0",
+		Subnqn:        in.Subsystem.Spec.Nqn,
+		Mn:            in.Subsystem.Spec.ModelNumber,
+		Sn:            in.Subsystem.Spec.SerialNumber,
+		MaxNamespaces: int(in.Subsystem.Spec.MaxNamespaces),
+		MinCtrlrID:    3,
+		MaxCtrlrID:    256,
 	}
 	var result MrvlNvmCreateSubsystemResult
 	err := call("mrvl_nvm_create_subsystem", &params, &result)
@@ -171,7 +176,12 @@ func (s *server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 	}
 
 	params := MrvlNvmSubsysCreateCtrlrParams{
-		Subnqn: subsys.Spec.Nqn,
+		Subnqn:       subsys.Spec.Nqn,
+		PcieDomainID: int(in.Controller.Spec.PcieId.PortId),
+		IsPf:         int(in.Controller.Spec.PcieId.PhysicalFunction),
+		InstanceID:   int(in.Controller.Spec.PcieId.VirtualFunction),
+		MaxNsq:       int(in.Controller.Spec.MaxNsq),
+		MaxNcq:       int(in.Controller.Spec.MaxNcq),
 	}
 	var result MrvlNvmSubsysCreateCtrlrResult
 	err := call("mrvl_nvm_subsys_create_ctrlr", &params, &result)
@@ -184,6 +194,7 @@ func (s *server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 		log.Printf("Could not get stats: %v", in)
 	}
 	controllers[in.Controller.Spec.Id.Value] = in.Controller
+	controllers[in.Controller.Spec.Id.Value].Spec.NvmeControllerId = int32(result.CtrlrID)
 	response := &pb.NVMeController{Spec: &pb.NVMeControllerSpec{Id: &pc.ObjectKey{Value: "TBD"}}}
 	err = deepcopier.Copy(in.Controller).To(response)
 	if err != nil {
@@ -207,7 +218,8 @@ func (s *server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 	}
 
 	params := MrvlNvmSubsysRemoveCtrlrParams{
-		Subnqn: subsys.Spec.Nqn,
+		Subnqn:  subsys.Spec.Nqn,
+		CntlrID: int(controller.Spec.NvmeControllerId),
 	}
 	var result MrvlNvmSubsysRemoveCtrlrResult
 	err := call("mrvl_nvm_subsys_remove_ctrlr", &params, &result)
@@ -232,7 +244,12 @@ func (s *server) UpdateNVMeController(ctx context.Context, in *pb.UpdateNVMeCont
 		return nil, err
 	}
 	params := MrvlNvmSubsysCreateCtrlrParams{
-		Subnqn: subsys.Spec.Nqn,
+		Subnqn:       subsys.Spec.Nqn,
+		PcieDomainID: int(in.Controller.Spec.PcieId.PortId),
+		IsPf:         int(in.Controller.Spec.PcieId.PhysicalFunction),
+		InstanceID:   int(in.Controller.Spec.PcieId.VirtualFunction),
+		MaxNsq:       int(in.Controller.Spec.MaxNsq),
+		MaxNcq:       int(in.Controller.Spec.MaxNcq),
 	}
 	var result MrvlNvmSubsysCreateCtrlrResult
 	err := call("mrvl_nvm_subsys_update_ctrlr", &params, &result)
@@ -288,7 +305,8 @@ func (s *server) GetNVMeController(ctx context.Context, in *pb.GetNVMeController
 	}
 
 	params := MrvlNvmGetCtrlrInfoParams{
-		Subnqn: subsys.Spec.Nqn,
+		Subnqn:  subsys.Spec.Nqn,
+		CtrlrID: int(controller.Spec.NvmeControllerId),
 	}
 	var result MrvlNvmGetCtrlrInfoResult
 	err := call("mrvl_nvm_ctrlr_get_info", &params, &result)
@@ -344,10 +362,15 @@ func (s *server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	// TODO: doo lookup through VolumeId key instead of using it's value
+	// TODO: do lookup through VolumeId key instead of using it's value
 	params := MrvlNvmSubsysAllocNsParams{
-		Subnqn: subsys.Spec.Nqn,
-		Bdev:   in.Namespace.Spec.VolumeId.Value,
+		Subnqn:       subsys.Spec.Nqn,
+		Nguid:        in.Namespace.Spec.Nguid,
+		Eui64:        strconv.FormatInt(in.Namespace.Spec.Eui64, 10),
+		UUID:         in.Namespace.Spec.Uuid.Value,
+		NsInstanceID: int(in.Namespace.Spec.HostNsid),
+		ShareEnable:  0,
+		Bdev:         in.Namespace.Spec.VolumeId.Value,
 	}
 	// TODO: who is doing mrvl_nvm_ctrlr_attach_ns() ?
 	var result MrvlNvmSubsysAllocNsResult
@@ -451,7 +474,8 @@ func (s *server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRe
 	}
 
 	params := MrvlNvmGetNsInfoParams{
-		SubNqn: subsys.Spec.Nqn,
+		SubNqn:       subsys.Spec.Nqn,
+		NsInstanceID: int(namespace.Spec.HostNsid),
 	}
 	var result MrvlNvmGetNsInfoResult
 	err := call("mrvl_nvm_ns_get_info", &params, &result)
@@ -482,7 +506,8 @@ func (s *server) NVMeNamespaceStats(ctx context.Context, in *pb.NVMeNamespaceSta
 	}
 
 	params := MrvlNvmGetNsStatsParams{
-		SubNqn: subsys.Spec.Nqn,
+		SubNqn:       subsys.Spec.Nqn,
+		NsInstanceID: int(namespace.Spec.HostNsid),
 	}
 	var result MrvlNvmGetNsStatsResult
 	err := call("mrvl_nvm_ns_get_stats", &params, &result)
