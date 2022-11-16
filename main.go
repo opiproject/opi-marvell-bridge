@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	port = flag.Int("port", 50051, "The server port")
+	port = flag.Int("mrvl_port", 50051, "The server port")
 )
 
 func main() {
@@ -37,7 +37,7 @@ func main() {
 	if !ok {
 		log.Fatal("Invalid feNvme type")
 	}
-	log.Printf("plugin serevr is %v", feNvme)
+	log.Printf("plugin server is %v", feNvme)
 	// 4. If everything is ok from the previous assertions, then we can proceed
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {

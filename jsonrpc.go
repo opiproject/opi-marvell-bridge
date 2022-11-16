@@ -17,7 +17,7 @@ import (
 
 var (
 	rpcID   int32 // json request message ID, auto incremented
-	rpcSock = flag.String("rpc_sock", "/var/tmp/spdk.sock", "Path to SPDK JSON RPC socket")
+	rpcSock = flag.String("mrvl_rpc_sock", "/var/tmp/spdk.sock", "Path to SPDK JSON RPC socket")
 )
 
 // low level rpc request/response handling
