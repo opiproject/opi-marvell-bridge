@@ -138,8 +138,11 @@ type MrvlNvmSubsysGetNsListResult struct {
 type MrvlNvmSubsysCreateCtrlrParams struct {
 	Subnqn       string `json:"subnqn"`
 	PcieDomainID int    `json:"pcie_domain_id"`
-	IsPf         int    `json:"is_pf"`
-	InstanceID   int    `json:"instance_id"`
+	PfID         int    `json:"pf_id"`
+	VfID         int    `json:"vf_id"`
+	CtrlID       int    `json:"ctrl_id"`
+	Sqes         int    `json:"sqes"`
+	Cqes         int    `json:"cqes"`
 	MaxNsq       int    `json:"max_nsq"`
 	MaxNcq       int    `json:"max_ncq"`
 }
