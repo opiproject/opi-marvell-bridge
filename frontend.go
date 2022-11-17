@@ -372,7 +372,6 @@ func (s *server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 		ShareEnable:  0,
 		Bdev:         in.Namespace.Spec.VolumeId.Value,
 	}
-	// TODO: who is doing mrvl_nvm_ctrlr_attach_ns() ?
 	var result MrvlNvmSubsysAllocNsResult
 	err := call("mrvl_nvm_subsys_alloc_ns", &params, &result)
 	if err != nil {
@@ -381,6 +380,24 @@ func (s *server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 	}
 	log.Printf("Received from SPDK: %v", result)
 	namespaces[in.Namespace.Spec.Id.Value] = in.Namespace
+
+	// Now, attach this new NS to ALL controllers
+	for _, c := range controllers {
+		params := MrvlNvmCtrlrAttachNsParams{
+			Subnqn:       subsys.Spec.Nqn,
+			CtrlID: 	  int(c.Spec.NvmeControllerId),
+			NsInstanceID: int(in.Namespace.Spec.HostNsid),
+		}
+		var result MrvlNvmCtrlrAttachNsResult
+		err := call("mrvl_nvm_ctrlr_attach_ns", &params, &result)
+		if err != nil {
+			log.Printf("error: %v", err)
+			return nil, err
+		}
+		if result.Status != 0 {
+			log.Printf("Could not get stats: %v", in)
+		}
+	}
 
 	response := &pb.NVMeNamespace{}
 	err = deepcopier.Copy(in.Namespace).To(response)
@@ -399,7 +416,6 @@ func (s *server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNames
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	// TODO: replace with MRVL code
 	subsys, ok := subsystems[namespace.Spec.SubsystemId.Value]
 	if !ok {
 		err := fmt.Errorf("unable to find subsystem %s", namespace.Spec.SubsystemId.Value)
@@ -408,7 +424,23 @@ func (s *server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNames
 		subsys = &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: namespace.Spec.SubsystemId.Value}}
 		// return nil, err
 	}
-
+	// First, detach this NS from ALL controllers
+	for _, c := range controllers {
+		params := MrvlNvmCtrlrDetachNsParams{
+			Subnqn:       subsys.Spec.Nqn,
+			CtrlID: 	  int(c.Spec.NvmeControllerId),
+			NsInstanceID: int(in.Namespace.Spec.HostNsid),
+		}
+		var result MrvlNvmCtrlrDetachNsResult
+		err := call("mrvl_nvm_ctrlr_detach_ns", &params, &result)
+		if err != nil {
+			log.Printf("error: %v", err)
+			return nil, err
+		}
+		if result.Status != 0 {
+			log.Printf("Could not get stats: %v", in)
+		}
+	}
 	params := MrvlNvmSubsysUnallocNsParams{
 		Subnqn:       subsys.Spec.Nqn,
 		NsInstanceID: int(namespace.Spec.HostNsid),
