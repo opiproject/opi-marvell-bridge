@@ -383,9 +383,12 @@ func (s *server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 
 	// Now, attach this new NS to ALL controllers
 	for _, c := range controllers {
+		if c.Spec.SubsystemId.Value != in.Namespace.Spec.SubsystemId.Value {
+			continue
+		}
 		params := MrvlNvmCtrlrAttachNsParams{
 			Subnqn:       subsys.Spec.Nqn,
-			CtrlID: 	  int(c.Spec.NvmeControllerId),
+			CtrlID:       int(c.Spec.NvmeControllerId),
 			NsInstanceID: int(in.Namespace.Spec.HostNsid),
 		}
 		var result MrvlNvmCtrlrAttachNsResult
@@ -420,16 +423,17 @@ func (s *server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNames
 	if !ok {
 		err := fmt.Errorf("unable to find subsystem %s", namespace.Spec.SubsystemId.Value)
 		log.Printf("error: %v", err)
-		// TODO: temp workaround
-		subsys = &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: namespace.Spec.SubsystemId.Value}}
-		// return nil, err
+		return nil, err
 	}
 	// First, detach this NS from ALL controllers
 	for _, c := range controllers {
+		if c.Spec.SubsystemId.Value != namespace.Spec.SubsystemId.Value {
+			continue
+		}
 		params := MrvlNvmCtrlrDetachNsParams{
 			Subnqn:       subsys.Spec.Nqn,
-			CtrlID: 	  int(c.Spec.NvmeControllerId),
-			NsInstanceID: int(in.Namespace.Spec.HostNsid),
+			CtrlrID:      int(c.Spec.NvmeControllerId),
+			NsInstanceID: int(namespace.Spec.HostNsid),
 		}
 		var result MrvlNvmCtrlrDetachNsResult
 		err := call("mrvl_nvm_ctrlr_detach_ns", &params, &result)
