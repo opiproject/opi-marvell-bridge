@@ -44,9 +44,18 @@ func (s *server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsy
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	subsystems[in.Subsystem.Spec.Id.Value] = in.Subsystem
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
+		log.Printf("Could not create: %v", in)
+	}
+	var ver MrvlNvmGetOffloadCapResult
+	err = call("mrvl_nvm_get_offload_cap", nil, &ver)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	log.Printf("Received from SPDK: %v", ver)
+	if ver.Status != 0 {
 		log.Printf("Could not create: %v", in)
 	}
 	response := &pb.NVMeSubsystem{}
@@ -55,6 +64,8 @@ func (s *server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsy
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	response.Status = &pb.NVMeSubsystemStatus{FirmwareRevision: ver.SdkVersion}
+	subsystems[in.Subsystem.Spec.Id.Value] = response
 	return response, nil
 }
 
