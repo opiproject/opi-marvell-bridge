@@ -171,7 +171,7 @@ func (s *server) NVMeSubsystemStats(ctx context.Context, in *pb.NVMeSubsystemSta
 	if result.Status != 0 {
 		log.Printf("Could not get stats: %v", in)
 	}
-	return &pb.NVMeSubsystemStatsResponse{Stats: "TBD"}, nil
+	return &pb.NVMeSubsystemStatsResponse{Stats: &pb.VolumeStats{}}, nil
 }
 
 // ////////////////////////////////////////////////////////
@@ -365,7 +365,14 @@ func (s *server) NVMeControllerStats(ctx context.Context, in *pb.NVMeControllerS
 	if result.Status != 0 {
 		log.Printf("Could not get stats: %v", in)
 	}
-	return &pb.NVMeControllerStatsResponse{Stats: "TBD"}, nil
+	return &pb.NVMeControllerStatsResponse{Stats: &pb.VolumeStats{
+		ReadBytesCount:    int32(result.NumReadBytes),
+		ReadOpsCount:      int32(result.NumReadCmds),
+		WriteBytesCount:   int32(result.NumWriteBytes),
+		WriteOpsCount:     int32(result.NumWriteCmds),
+		ReadLatencyTicks:  int32(result.TotalReadLatencyInUs),
+		WriteLatencyTicks: int32(result.TotalWriteLatencyInUs),
+	}}, nil
 }
 
 // ////////////////////////////////////////////////////////
@@ -572,5 +579,12 @@ func (s *server) NVMeNamespaceStats(ctx context.Context, in *pb.NVMeNamespaceSta
 	if result.Status != 0 {
 		log.Printf("Could not get stats: %v", in)
 	}
-	return &pb.NVMeNamespaceStatsResponse{Stats: "TBD"}, nil
+	return &pb.NVMeNamespaceStatsResponse{Stats: &pb.VolumeStats{
+		ReadBytesCount:    int32(result.NumReadBytes),
+		ReadOpsCount:      int32(result.NumReadCmds),
+		WriteBytesCount:   int32(result.NumWriteBytes),
+		WriteOpsCount:     int32(result.NumWriteCmds),
+		ReadLatencyTicks:  int32(result.TotalReadLatencyInUs),
+		WriteLatencyTicks: int32(result.TotalWriteLatencyInUs),
+	}}, nil
 }
