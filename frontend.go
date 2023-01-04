@@ -164,7 +164,7 @@ func (s *server) NVMeSubsystemStats(ctx context.Context, in *pb.NVMeSubsystemSta
 	log.Printf("NVMeSubsystemStats: Received from client: %v", in)
 	subsys, ok := subsystems[in.SubsystemId.Value]
 	if !ok {
-		err := fmt.Errorf("unable to find key %s", in.SubsystemId)
+		err := fmt.Errorf("unable to find key %s", in.SubsystemId.Value)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func (s *server) NVMeSubsystemStats(ctx context.Context, in *pb.NVMeSubsystemSta
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.NVMeSubsystemStatsResponse{Stats: &pb.VolumeStats{}}, nil
+	return &pb.NVMeSubsystemStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }
 
 // ////////////////////////////////////////////////////////
