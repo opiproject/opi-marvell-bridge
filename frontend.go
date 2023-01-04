@@ -46,7 +46,9 @@ func (s *server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsy
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		log.Printf("Could not create: %v", in)
+		msg := fmt.Sprintf("Could not create NQN: %s", in.NvMeSubsystem.Spec.Nqn)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	var ver MrvlNvmGetOffloadCapResult
 	err = call("mrvl_nvm_get_offload_cap", nil, &ver)
@@ -56,7 +58,9 @@ func (s *server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsy
 	}
 	log.Printf("Received from SPDK: %v", ver)
 	if ver.Status != 0 {
-		log.Printf("Could not create: %v", in)
+		msg := fmt.Sprintf("Could not get FW version for NQN create request: %s", in.NvMeSubsystem.Spec.Nqn)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	response := &pb.NVMeSubsystem{}
 	err = deepcopier.Copy(in.NvMeSubsystem).To(response)
@@ -88,7 +92,9 @@ func (s *server) DeleteNVMeSubsystem(ctx context.Context, in *pb.DeleteNVMeSubsy
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		log.Printf("Could not delete: %v", in)
+		msg := fmt.Sprintf("Could not delete NQN: %s", subsys.Spec.Nqn)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	delete(subsystems, subsys.Spec.Id.Value)
 	return &emptypb.Empty{}, nil
@@ -109,7 +115,9 @@ func (s *server) ListNVMeSubsystems(ctx context.Context, in *pb.ListNVMeSubsyste
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		log.Printf("Could not create: %v", in)
+		msg := fmt.Sprintf("Could not list subsystems")
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 
 	Blobarray := make([]*pb.NVMeSubsystem, len(result.SubsysList))
@@ -137,12 +145,14 @@ func (s *server) GetNVMeSubsystem(ctx context.Context, in *pb.GetNVMeSubsystemRe
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		log.Printf("Could not get: %v", in)
+		msg := fmt.Sprintf("Could not list NQN: %s", subsys.Spec.Nqn)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	for i := range result.SubsysList {
 		r := &result.SubsysList[i]
 		if r.Subnqn == subsys.Spec.Nqn {
-			return &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: r.Subnqn}}, nil
+			return &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: r.Subnqn}, Status: &pb.NVMeSubsystemStatus{FirmwareRevision: "TBD"}}, nil
 		}
 	}
 	msg := fmt.Sprintf("Could not find NQN: %s", subsys.Spec.Nqn)
@@ -169,7 +179,9 @@ func (s *server) NVMeSubsystemStats(ctx context.Context, in *pb.NVMeSubsystemSta
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		log.Printf("Could not get stats: %v", in)
+		msg := fmt.Sprintf("Could not stats NQN: %s", subsys.Spec.Nqn)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	return &pb.NVMeSubsystemStatsResponse{Stats: &pb.VolumeStats{}}, nil
 }
@@ -205,7 +217,9 @@ func (s *server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		log.Printf("Could not get stats: %v", in)
+		msg := fmt.Sprintf("Could not create CTRL: %s", in.NvMeController.Spec.Id.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	controllers[in.NvMeController.Spec.Id.Value] = in.NvMeController
 	controllers[in.NvMeController.Spec.Id.Value].Spec.NvmeControllerId = int32(result.CtrlrID)
@@ -243,7 +257,9 @@ func (s *server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		log.Printf("Could not delete: %v", in)
+		msg := fmt.Sprintf("Could not delete CTRL: %s", controller.Spec.Id.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	delete(controllers, controller.Spec.Id.Value)
 	return &emptypb.Empty{}, nil
@@ -276,7 +292,9 @@ func (s *server) UpdateNVMeController(ctx context.Context, in *pb.UpdateNVMeCont
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		log.Printf("Could not delete: %v", in)
+		msg := fmt.Sprintf("Could not update CTRL: %s", in.NvMeController.Spec.Id.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	controllers[in.NvMeController.Spec.Id.Value] = in.NvMeController
 	response := &pb.NVMeController{}
@@ -298,7 +316,9 @@ func (s *server) ListNVMeControllers(ctx context.Context, in *pb.ListNVMeControl
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		log.Printf("Could not delete: %v", in)
+		msg := fmt.Sprintf("Could not list CTRLs")
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	Blobarray := make([]*pb.NVMeController, len(result.CtrlrIDList))
 	for i := range result.CtrlrIDList {
@@ -333,7 +353,9 @@ func (s *server) GetNVMeController(ctx context.Context, in *pb.GetNVMeController
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		log.Printf("Could not get stats: %v", in)
+		msg := fmt.Sprintf("Could not get CTRL: %s", in.Name)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 
 	return &pb.NVMeController{Spec: &pb.NVMeControllerSpec{Id: &pc.ObjectKey{Value: in.Name}, NvmeControllerId: controller.Spec.NvmeControllerId}}, nil
@@ -363,7 +385,9 @@ func (s *server) NVMeControllerStats(ctx context.Context, in *pb.NVMeControllerS
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		log.Printf("Could not get stats: %v", in)
+		msg := fmt.Sprintf("Could not stats CTRL: %s", in.Id.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	return &pb.NVMeControllerStatsResponse{Stats: &pb.VolumeStats{
 		ReadBytesCount:    int32(result.NumReadBytes),
@@ -403,6 +427,12 @@ func (s *server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	if result.Status != 0 {
+		msg := fmt.Sprintf("Could not create NS: %s", in.NvMeNamespace.Spec.Id.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
+
 	namespaces[in.NvMeNamespace.Spec.Id.Value] = in.NvMeNamespace
 
 	// Now, attach this new NS to ALL controllers
@@ -422,7 +452,9 @@ func (s *server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 			return nil, err
 		}
 		if result.Status != 0 {
-			log.Printf("Could not get stats: %v", in)
+			msg := fmt.Sprintf("Could not attach NS: %s", in.NvMeNamespace.Spec.Id.Value)
+			log.Print(msg)
+			return nil, status.Errorf(codes.InvalidArgument, msg)
 		}
 	}
 
@@ -465,8 +497,11 @@ func (s *server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNames
 			log.Printf("error: %v", err)
 			return nil, err
 		}
+		log.Printf("Received from SPDK: %v", result)
 		if result.Status != 0 {
-			log.Printf("Could not get stats: %v", in)
+			msg := fmt.Sprintf("Could not delete NS: %s", in.Name)
+			log.Print(msg)
+			return nil, status.Errorf(codes.InvalidArgument, msg)
 		}
 	}
 	params := MrvlNvmSubsysUnallocNsParams{
@@ -480,6 +515,11 @@ func (s *server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNames
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	if result.Status != 0 {
+		msg := fmt.Sprintf("Could not delete NS: %s", in.Name)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
 	delete(namespaces, namespace.Spec.Id.Value)
 	return &emptypb.Empty{}, nil
 }
@@ -508,7 +548,9 @@ func (s *server) ListNVMeNamespaces(ctx context.Context, in *pb.ListNVMeNamespac
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		log.Printf("Could not delete: %v", in)
+		msg := fmt.Sprintf("Could not list NS: %s", in.Parent)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	Blobarray := make([]*pb.NVMeNamespace, len(result.NsList))
 	for i := range result.NsList {
@@ -545,7 +587,9 @@ func (s *server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRe
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		log.Printf("Could not get stats: %v", in)
+		msg := fmt.Sprintf("Could not get NS: %s", in.Name)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	return &pb.NVMeNamespace{Spec: &pb.NVMeNamespaceSpec{Id: &pc.ObjectKey{Value: in.Name}, Nguid: result.Nguid}}, nil
 }
@@ -577,7 +621,9 @@ func (s *server) NVMeNamespaceStats(ctx context.Context, in *pb.NVMeNamespaceSta
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		log.Printf("Could not get stats: %v", in)
+		msg := fmt.Sprintf("Could not stats NS: %s", in.NamespaceId.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	return &pb.NVMeNamespaceStatsResponse{Stats: &pb.VolumeStats{
 		ReadBytesCount:    int32(result.NumReadBytes),
