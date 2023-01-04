@@ -115,7 +115,7 @@ func (s *server) ListNVMeSubsystems(ctx context.Context, in *pb.ListNVMeSubsyste
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		msg := fmt.Sprintf("Could not list subsystems")
+		msg := "Could not list subsystems"
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
@@ -320,7 +320,7 @@ func (s *server) ListNVMeControllers(ctx context.Context, in *pb.ListNVMeControl
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		msg := fmt.Sprintf("Could not list CTRLs")
+		msg := fmt.Sprintf("Could not list CTRLs: %v", in.Parent)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
@@ -504,7 +504,7 @@ func (s *server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNames
 		}
 		log.Printf("Received from SPDK: %v", result)
 		if result.Status != 0 {
-			msg := fmt.Sprintf("Could not delete NS: %s", in.Name)
+			msg := fmt.Sprintf("Could not detach NS: %s", in.Name)
 			log.Print(msg)
 			return nil, status.Errorf(codes.InvalidArgument, msg)
 		}
