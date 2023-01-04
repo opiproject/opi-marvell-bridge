@@ -223,6 +223,7 @@ func (s *server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 	}
 	controllers[in.NvMeController.Spec.Id.Value] = in.NvMeController
 	controllers[in.NvMeController.Spec.Id.Value].Spec.NvmeControllerId = int32(result.CtrlrID)
+	controllers[in.NvMeController.Spec.Id.Value].Status = &pb.NVMeControllerStatus{Active: true}
 	response := &pb.NVMeController{Spec: &pb.NVMeControllerSpec{Id: &pc.ObjectKey{Value: "TBD"}}}
 	err = deepcopier.Copy(in.NvMeController).To(response)
 	if err != nil {
@@ -297,6 +298,8 @@ func (s *server) UpdateNVMeController(ctx context.Context, in *pb.UpdateNVMeCont
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	controllers[in.NvMeController.Spec.Id.Value] = in.NvMeController
+	controllers[in.NvMeController.Spec.Id.Value].Spec.NvmeControllerId = int32(result.CtrlrID)
+	controllers[in.NvMeController.Spec.Id.Value].Status = &pb.NVMeControllerStatus{Active: true}
 	response := &pb.NVMeController{}
 	err = deepcopier.Copy(in.NvMeController).To(response)
 	if err != nil {
@@ -308,6 +311,7 @@ func (s *server) UpdateNVMeController(ctx context.Context, in *pb.UpdateNVMeCont
 
 func (s *server) ListNVMeControllers(ctx context.Context, in *pb.ListNVMeControllersRequest) (*pb.ListNVMeControllersResponse, error) {
 	log.Printf("ListNVMeControllers: Received from client: %v", in)
+	// TODO: missing MrvlNvmSubsysGetCtrlrListParams
 	var result MrvlNvmSubsysGetCtrlrListResult
 	err := call("mrvl_nvm_subsys_get_ctrlr_list", nil, &result)
 	if err != nil {
@@ -358,7 +362,7 @@ func (s *server) GetNVMeController(ctx context.Context, in *pb.GetNVMeController
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 
-	return &pb.NVMeController{Spec: &pb.NVMeControllerSpec{Id: &pc.ObjectKey{Value: in.Name}, NvmeControllerId: controller.Spec.NvmeControllerId}}, nil
+	return &pb.NVMeController{Spec: &pb.NVMeControllerSpec{Id: &pc.ObjectKey{Value: in.Name}, NvmeControllerId: controller.Spec.NvmeControllerId}, Status: &pb.NVMeControllerStatus{Active: true}}, nil
 }
 
 func (s *server) NVMeControllerStats(ctx context.Context, in *pb.NVMeControllerStatsRequest) (*pb.NVMeControllerStatsResponse, error) {
