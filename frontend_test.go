@@ -96,7 +96,7 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 				},
 			},
 			nil,
-			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result": {"status": 1}}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create NQN: %v", "nqn.2022-09.io.spdk:opi3"),
 			true,
@@ -114,7 +114,7 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.Unknown,
-			fmt.Sprintf("subsystem_nvme_create: %v", "EOF"),
+			fmt.Sprintf("mrvl_nvm_create_subsystem: %v", "EOF"),
 			true,
 		},
 		{
@@ -128,9 +128,9 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 				},
 			},
 			nil,
-			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
+			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.Unknown,
-			fmt.Sprintf("subsystem_nvme_create: %v", "json response ID mismatch"),
+			fmt.Sprintf("mrvl_nvm_create_subsystem: %v", "json response ID mismatch"),
 			true,
 		},
 		{
@@ -144,9 +144,25 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 				},
 			},
 			nil,
-			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
+			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":{"status": 1}}`},
 			codes.Unknown,
-			fmt.Sprintf("subsystem_nvme_create: %v", "json response error: myopierr"),
+			fmt.Sprintf("mrvl_nvm_create_subsystem: %v", "json response error: myopierr"),
+			true,
+		},
+		{
+			"valid request with invalid SPDK version responce",
+			&pb.NVMeSubsystem{
+				Spec: &pb.NVMeSubsystemSpec{
+					Id:           &pc.ObjectKey{Value: "subsystem-test"},
+					Nqn:          "nqn.2022-09.io.spdk:opi3",
+					SerialNumber: "OpiSerialNumber",
+					ModelNumber:  "OpiModelNumber",
+				},
+			},
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0}}`, `{"jsonrpc":"2.0","id":%d,"result":{"status":1,"sdk_version":"11.22.06","nvm_version":"1.3","num_pcie_domains":1,"num_pfs_per_domain":1,"num_vfs_per_pf":16,"total_ioq_per_pf":128,"max_ioq_per_pf":128,"max_ioq_per_vf":128,"max_subsystems":16,"max_ns_per_subsys":8,"max_ctrlr_per_subsys":16}}`},
+			codes.InvalidArgument,
+			fmt.Sprintf("Could not get FW version for NQN create request: %v", "nqn.2022-09.io.spdk:opi3"),
 			true,
 		},
 		{
@@ -167,10 +183,10 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 					ModelNumber:  "OpiModelNumber",
 				},
 				Status: &pb.NVMeSubsystemStatus{
-					FirmwareRevision: "SPDK v20.10",
+					FirmwareRevision: "11.22.06",
 				},
 			},
-			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"jsonrpc":"2.0","id":%d,"result":{"version":"SPDK v20.10","fields":{"major":20,"minor":10,"patch":0,"suffix":""}}}`}, // `{"jsonrpc": "2.0", "id": 1, "result": True}`,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0}}`, `{"jsonrpc":"2.0","id":%d,"result":{"status":0,"sdk_version":"11.22.06","nvm_version":"1.3","num_pcie_domains":1,"num_pfs_per_domain":1,"num_vfs_per_pf":16,"total_ioq_per_pf":128,"max_ioq_per_pf":128,"max_ioq_per_vf":128,"max_subsystems":16,"max_ns_per_subsys":8,"max_ctrlr_per_subsys":16}}`},
 			codes.OK,
 			"",
 			true,
@@ -290,9 +306,9 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 		{
 			"valid request with invalid SPDK responce",
 			nil,
-			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not create NQN: %v", "nqn.2022-09.io.spdk:opi3"),
+			fmt.Sprintf("Could not list %v", "subsystems"),
 			true,
 		},
 		{
@@ -300,52 +316,33 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.Unknown,
-			fmt.Sprintf("subsystem_nvme_list: %v", "EOF"),
+			fmt.Sprintf("mrvl_nvm_get_subsys_list: %v", "EOF"),
 			true,
 		},
 		{
 			"valid request with ID mismatch SPDK responce",
 			nil,
-			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
+			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.Unknown,
-			fmt.Sprintf("subsystem_nvme_list: %v", "json response ID mismatch"),
+			fmt.Sprintf("mrvl_nvm_get_subsys_list: %v", "json response ID mismatch"),
 			true,
 		},
 		{
 			"valid request with error code from SPDK responce",
 			nil,
-			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":[]}`},
+			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":{"status": 1}}`},
 			codes.Unknown,
-			fmt.Sprintf("subsystem_nvme_list: %v", "json response error: myopierr"),
+			fmt.Sprintf("mrvl_nvm_get_subsys_list: %v", "json response error: myopierr"),
 			true,
 		},
 		{
 			"valid request with valid SPDK responce",
 			[]*pb.NVMeSubsystem{
-				{
-					Spec: &pb.NVMeSubsystemSpec{
-						Nqn:          "nqn.2022-09.io.spdk:opi1",
-						SerialNumber: "OpiSerialNumber1",
-						ModelNumber:  "OpiModelNumber1",
-					},
-				},
-				{
-					Spec: &pb.NVMeSubsystemSpec{
-						Nqn:          "nqn.2022-09.io.spdk:opi2",
-						SerialNumber: "OpiSerialNumber2",
-						ModelNumber:  "OpiModelNumber2",
-					},
-				},
-				{
-					Spec: &pb.NVMeSubsystemSpec{
-						Nqn:          "nqn.2022-09.io.spdk:opi3",
-						SerialNumber: "OpiSerialNumber3",
-						ModelNumber:  "OpiModelNumber3",
-					},
-				},
+				{Spec: &pb.NVMeSubsystemSpec{Nqn: "nqn.2022-09.io.spdk:opi1"}},
+				{Spec: &pb.NVMeSubsystemSpec{Nqn: "nqn.2022-09.io.spdk:opi2"}},
+				{Spec: &pb.NVMeSubsystemSpec{Nqn: "nqn.2022-09.io.spdk:opi3"}},
 			},
-			// {'jsonrpc': '2.0', 'id': 1, 'result': [{'nqn': 'nqn.2020-12.mlnx.snap', 'serial_number': 'Mellanox_NVMe_SNAP', 'model_number': 'Mellanox NVMe SNAP Controller', 'controllers': [{'name': 'NvmeEmu0pf1', 'cntlid': 0, 'pci_bdf': 'ca:00.3', 'pci_index': 1}]}]}
-			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[{"nqn": "nqn.2022-09.io.spdk:opi1", "serial_number": "OpiSerialNumber1", "model_number": "OpiModelNumber1"},{"nqn": "nqn.2022-09.io.spdk:opi2", "serial_number": "OpiSerialNumber2", "model_number": "OpiModelNumber2"},{"nqn": "nqn.2022-09.io.spdk:opi3", "serial_number": "OpiSerialNumber3", "model_number": "OpiModelNumber3"}]}`},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0, "subsys_list": [{"subnqn": "nqn.2022-09.io.spdk:opi1"},{"subnqn": "nqn.2022-09.io.spdk:opi2"},{"subnqn": "nqn.2022-09.io.spdk:opi3"}]}}`},
 			codes.OK,
 			"",
 			true,
@@ -413,9 +410,9 @@ func TestFrontEnd_GetNVMeSubsystem(t *testing.T) {
 			"valid request with invalid SPDK responce",
 			"subsystem-test",
 			nil,
-			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not find NQN: %v", "nqn.2022-09.io.spdk:opi3"),
+			fmt.Sprintf("Could not list NQN: %v", "nqn.2022-09.io.spdk:opi3"),
 			true,
 		},
 		{
@@ -424,42 +421,35 @@ func TestFrontEnd_GetNVMeSubsystem(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.Unknown,
-			fmt.Sprintf("subsystem_nvme_list: %v", "EOF"),
+			fmt.Sprintf("mrvl_nvm_get_subsys_list: %v", "EOF"),
 			true,
 		},
 		{
 			"valid request with ID mismatch SPDK responce",
 			"subsystem-test",
 			nil,
-			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
+			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.Unknown,
-			fmt.Sprintf("subsystem_nvme_list: %v", "json response ID mismatch"),
+			fmt.Sprintf("mrvl_nvm_get_subsys_list: %v", "json response ID mismatch"),
 			true,
 		},
 		{
 			"valid request with error code from SPDK responce",
 			"subsystem-test",
 			nil,
-			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":[]}`},
+			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":{"status": 1}}`},
 			codes.Unknown,
-			fmt.Sprintf("subsystem_nvme_list: %v", "json response error: myopierr"),
+			fmt.Sprintf("mrvl_nvm_get_subsys_list: %v", "json response error: myopierr"),
 			true,
 		},
 		{
 			"valid request with valid SPDK responce",
 			"subsystem-test",
 			&pb.NVMeSubsystem{
-				Spec: &pb.NVMeSubsystemSpec{
-					Nqn:          "nqn.2022-09.io.spdk:opi3",
-					SerialNumber: "OpiSerialNumber3",
-					ModelNumber:  "OpiModelNumber3",
-				},
-				Status: &pb.NVMeSubsystemStatus{
-					FirmwareRevision: "TBD",
-				},
+				Spec:   &pb.NVMeSubsystemSpec{Nqn: "nqn.2022-09.io.spdk:opi3"},
+				Status: &pb.NVMeSubsystemStatus{FirmwareRevision: "TBD"},
 			},
-			// {'jsonrpc': '2.0', 'id': 1, 'result': [{'nqn': 'nqn.2020-12.mlnx.snap', 'serial_number': 'Mellanox_NVMe_SNAP', 'model_number': 'Mellanox NVMe SNAP Controller', 'controllers': [{'name': 'NvmeEmu0pf1', 'cntlid': 0, 'pci_bdf': 'ca:00.3', 'pci_index': 1}]}]}
-			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[{"nqn": "nqn.2022-09.io.spdk:opi1", "serial_number": "OpiSerialNumber1", "model_number": "OpiModelNumber1"},{"nqn": "nqn.2022-09.io.spdk:opi2", "serial_number": "OpiSerialNumber2", "model_number": "OpiModelNumber2"},{"nqn": "nqn.2022-09.io.spdk:opi3", "serial_number": "OpiSerialNumber3", "model_number": "OpiModelNumber3"}]}`},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0, "subsys_list": [{"subnqn": "nqn.2022-09.io.spdk:opi1"},{"subnqn": "nqn.2022-09.io.spdk:opi2"},{"subnqn": "nqn.2022-09.io.spdk:opi3"}]}}`},
 			codes.OK,
 			"",
 			true,
@@ -529,17 +519,76 @@ func TestFrontEnd_NVMeSubsystemStats(t *testing.T) {
 	tests := []struct {
 		name    string
 		in      string
-		out     *pb.NVMeSubsystemStatsResponse
+		out     *pb.VolumeStats
+		spdk    []string
 		errCode codes.Code
 		errMsg  string
 		start   bool
 	}{
 		{
-			"unimplemented method",
+			"valid request with invalid SPDK responce",
 			"subsystem-test",
 			nil,
-			codes.Unimplemented,
-			fmt.Sprintf("%v method is not implemented", "UpdateNVMeSubsystem"),
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1}}`},
+			codes.InvalidArgument,
+			fmt.Sprintf("Could not stats NQN: %v", "nqn.2022-09.io.spdk:opi3"),
+			true,
+		},
+		{
+			"valid request with invalid marshal SPDK responce",
+			"subsystem-test",
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
+			codes.Unknown,
+			fmt.Sprintf("mrvl_nvm_subsys_get_info: %v", "json: cannot unmarshal array into Go struct field .result of type main.MrvlNvmGetSubsysInfoResult"),
+			true,
+		},
+		{
+			"valid request with empty SPDK responce",
+			"subsystem-test",
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("mrvl_nvm_subsys_get_info: %v", "EOF"),
+			true,
+		},
+		{
+			"valid request with ID mismatch SPDK responce",
+			"subsystem-test",
+			nil,
+			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1}}`},
+			codes.Unknown,
+			fmt.Sprintf("mrvl_nvm_subsys_get_info: %v", "json response ID mismatch"),
+			true,
+		},
+		{
+			"valid request with error code from SPDK responce",
+			"subsystem-test",
+			nil,
+			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
+			codes.Unknown,
+			fmt.Sprintf("mrvl_nvm_subsys_get_info: %v", "json response error: myopierr"),
+			true,
+		},
+		{
+			"valid request with valid SPDK responce",
+			"subsystem-test",
+			&pb.VolumeStats{
+				ReadOpsCount:  -1,
+				WriteOpsCount: -1,
+			},
+			[]string{`{"jsonrpc":"2.0","id":%d,"result":{"status":0,"subsys_list":[{"subnqn":"nqn.2014-08.org.nvmexpress.discovery","mn":"OCTEON NVME 0.0.1","sn":"OCTNVME0000000000002","max_namespaces":16,"min_ctrlr_id":1,"max_ctrlr_id":8,"num_ns":2,"num_total_ctrlr":2,"num_active_ctrlr":2,"ns_list":[{"ns_instance_id":1,"bdev":"bdev01","ctrlr_id_list":[{"ctrlr_id":1},{"ctrlr_id":2}]},{"ns_instance_id":1,"bdev":"bdev02","ctrlr_id_list":[{"ctrlr_id":3}]}]}]}}`},
+			codes.OK,
+			"",
+			true,
+		},
+		{
+			"valid request with unknown key",
+			"unknown-subsystem-id",
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("unable to find key %v", "unknown-subsystem-id"),
 			false,
 		},
 	}
@@ -553,13 +602,28 @@ func TestFrontEnd_NVMeSubsystemStats(t *testing.T) {
 	defer conn.Close()
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
+	// start SPDK mockup server
+	if err := os.RemoveAll(*rpcSock); err != nil {
+		log.Fatal(err)
+	}
+	ln, err := net.Listen("unix", *rpcSock)
+	if err != nil {
+		log.Fatal("listen error:", err)
+	}
+	defer ln.Close()
+
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.start {
+				go spdkMockServer(ln, tt.spdk)
+			}
 			request := &pb.NVMeSubsystemStatsRequest{SubsystemId: &pc.ObjectKey{Value: tt.in}}
 			response, err := client.NVMeSubsystemStats(ctx, request)
 			if response != nil {
-				t.Error("response: expected", codes.Unimplemented, "received", response)
+				if !reflect.DeepEqual(response.Stats, tt.out) {
+					t.Error("response: expected", tt.out, "received", response.Stats)
+				}
 			}
 
 			if err != nil {
@@ -1634,7 +1698,7 @@ func TestFrontEnd_NVMeNamespaceStats(t *testing.T) {
 			"valid request with valid SPDK responce",
 			"namespace-test",
 			&pb.VolumeStats{
-				ReadOpsCount: 12345,
+				ReadOpsCount:  12345,
 				WriteOpsCount: 54321,
 			},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result": {"controllers":[{"name":"NvmeEmu0pf1","bdevs":[{"bdev_name":"Malloc0","read_ios":55,"completed_read_ios":55,"write_ios":33,"completed_write_ios":33,"flush_ios":0,"completed_flush_ios":0,"err_read_ios":0,"err_write_ios":0,"err_flush_ios":0},{"bdev_name":"Malloc1","read_ios":12345,"completed_read_ios":12345,"write_ios":54321,"completed_write_ios":54321,"flush_ios":0,"completed_flush_ios":0,"err_read_ios":0,"err_write_ios":0,"err_flush_ios":0}]}]}}`},
