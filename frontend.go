@@ -468,6 +468,7 @@ func (s *server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	response.Status = &pb.NVMeNamespaceStatus{PciState: 2, PciOperState: 1}
 	return response, nil
 }
 
@@ -595,7 +596,7 @@ func (s *server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRe
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.NVMeNamespace{Spec: &pb.NVMeNamespaceSpec{Id: &pc.ObjectKey{Value: in.Name}, Nguid: result.Nguid}}, nil
+	return &pb.NVMeNamespace{Spec: &pb.NVMeNamespaceSpec{Id: &pc.ObjectKey{Value: in.Name}, Nguid: result.Nguid}, Status: &pb.NVMeNamespaceStatus{PciState: 2, PciOperState: 1}}, nil
 }
 
 func (s *server) NVMeNamespaceStats(ctx context.Context, in *pb.NVMeNamespaceStatsRequest) (*pb.NVMeNamespaceStatsResponse, error) {
