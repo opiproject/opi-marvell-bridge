@@ -2,7 +2,7 @@
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
 // Copyright (C) 2022 Marvell International Ltd.
 
-package main
+package jsonrpc
 
 import (
 	"bufio"
@@ -16,19 +16,19 @@ import (
 )
 
 var (
-	rpcID   int32 // json request message ID, auto incremented
-	rpcSock = flag.String("mrvl_rpc_sock", "/var/tmp/spdk.sock", "Path to SPDK JSON RPC socket")
+	RpcID   int32 // json request message ID, auto incremented
+	RpcSock = flag.String("mrvl_rpc_sock", "/var/tmp/spdk.sock", "Path to SPDK JSON RPC socket")
 )
 
-// low level rpc request/response handling
-func call(method string, args, result interface{}) error {
+// Call low level rpc request/response handling
+func Call(method string, args, result interface{}) error {
 	type rpcRequest struct {
 		Ver    string `json:"jsonrpc"`
 		ID     int32  `json:"id"`
 		Method string `json:"method"`
 	}
 
-	id := atomic.AddInt32(&rpcID, 1)
+	id := atomic.AddInt32(&RpcID, 1)
 	request := rpcRequest{
 		Ver:    "2.0",
 		ID:     id,
@@ -57,7 +57,7 @@ func call(method string, args, result interface{}) error {
 	log.Printf("Sending to SPDK: %s", data)
 
 	// TODO: add also web option: resp, _ = webSocketCom(rpcClient, data)
-	resp, _ := unixSocketCom(*rpcSock, data)
+	resp, _ := unixSocketCom(*RpcSock, data)
 
 	response := struct {
 		ID    int32 `json:"id"`

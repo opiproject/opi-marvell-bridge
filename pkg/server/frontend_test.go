@@ -2,12 +2,13 @@
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
 // Copyright (C) 2022 Marvell International Ltd.
 
-package main
+package server
 
 import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/opiproject/opi-marvell-bridge/pkg/jsonrpc"
 	"google.golang.org/protobuf/proto"
 	"log"
 	"net"
@@ -50,7 +51,7 @@ func spdkMockServer(l net.Listener, toSend []string) {
 			log.Fatal("accept error:", err)
 		}
 		log.Printf("SPDK mockup server: client connected [%s]", fd.RemoteAddr().Network())
-		log.Printf("SPDK ID [%d]", rpcID)
+		log.Printf("SPDK ID [%d]", jsonrpc.RpcID)
 
 		buf := make([]byte, 512)
 		nr, err := fd.Read(buf)
@@ -60,7 +61,7 @@ func spdkMockServer(l net.Listener, toSend []string) {
 
 		data := buf[0:nr]
 		if strings.Contains(spdk, "%") {
-			spdk = fmt.Sprintf(spdk, rpcID)
+			spdk = fmt.Sprintf(spdk, jsonrpc.RpcID)
 		}
 
 		log.Printf("SPDK mockup server: got : %s", string(data))
@@ -176,10 +177,10 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
+	if err := os.RemoveAll(*jsonrpc.RpcSock); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *rpcSock)
+	ln, err := net.Listen("unix", *jsonrpc.RpcSock)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
@@ -337,10 +338,10 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
+	if err := os.RemoveAll(*jsonrpc.RpcSock); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *rpcSock)
+	ln, err := net.Listen("unix", *jsonrpc.RpcSock)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
@@ -453,10 +454,10 @@ func TestFrontEnd_GetNVMeSubsystem(t *testing.T) {
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
+	if err := os.RemoveAll(*jsonrpc.RpcSock); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *rpcSock)
+	ln, err := net.Listen("unix", *jsonrpc.RpcSock)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
@@ -518,7 +519,7 @@ func TestFrontEnd_NVMeSubsystemStats(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
-			fmt.Sprintf("mrvl_nvm_subsys_get_info: %v", "json: cannot unmarshal array into Go struct field .result of type main.MrvlNvmGetSubsysInfoResult"),
+			fmt.Sprintf("mrvl_nvm_subsys_get_info: %v", "json: cannot unmarshal array into Go struct field .result of type spdk.MrvlNvmGetSubsysInfoResult"),
 			true,
 		},
 		{
@@ -581,10 +582,10 @@ func TestFrontEnd_NVMeSubsystemStats(t *testing.T) {
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
+	if err := os.RemoveAll(*jsonrpc.RpcSock); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *rpcSock)
+	ln, err := net.Listen("unix", *jsonrpc.RpcSock)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
@@ -725,10 +726,10 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
+	if err := os.RemoveAll(*jsonrpc.RpcSock); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *rpcSock)
+	ln, err := net.Listen("unix", *jsonrpc.RpcSock)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
@@ -877,10 +878,10 @@ func TestFrontEnd_UpdateNVMeController(t *testing.T) {
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
+	if err := os.RemoveAll(*jsonrpc.RpcSock); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *rpcSock)
+	ln, err := net.Listen("unix", *jsonrpc.RpcSock)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
@@ -1014,10 +1015,10 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
+	if err := os.RemoveAll(*jsonrpc.RpcSock); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *rpcSock)
+	ln, err := net.Listen("unix", *jsonrpc.RpcSock)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
@@ -1132,10 +1133,10 @@ func TestFrontEnd_GetNVMeController(t *testing.T) {
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
+	if err := os.RemoveAll(*jsonrpc.RpcSock); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *rpcSock)
+	ln, err := net.Listen("unix", *jsonrpc.RpcSock)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
@@ -1197,7 +1198,7 @@ func TestFrontEnd_NVMeControllerStats(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
-			fmt.Sprintf("mrvl_nvm_ctrlr_get_stats: %v", "json: cannot unmarshal array into Go struct field .result of type main.MrvlNvmGetCtrlrStatsResult"),
+			fmt.Sprintf("mrvl_nvm_ctrlr_get_stats: %v", "json: cannot unmarshal array into Go struct field .result of type spdk.MrvlNvmGetCtrlrStatsResult"),
 			true,
 		},
 		{
@@ -1264,10 +1265,10 @@ func TestFrontEnd_NVMeControllerStats(t *testing.T) {
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
+	if err := os.RemoveAll(*jsonrpc.RpcSock); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *rpcSock)
+	ln, err := net.Listen("unix", *jsonrpc.RpcSock)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
@@ -1420,10 +1421,10 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
+	if err := os.RemoveAll(*jsonrpc.RpcSock); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *rpcSock)
+	ln, err := net.Listen("unix", *jsonrpc.RpcSock)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
@@ -1541,7 +1542,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
-			fmt.Sprintf("mrvl_nvm_subsys_get_ns_list: %v", "json: cannot unmarshal array into Go struct field .result of type main.MrvlNvmSubsysGetNsListResult"),
+			fmt.Sprintf("mrvl_nvm_subsys_get_ns_list: %v", "json: cannot unmarshal array into Go struct field .result of type spdk.MrvlNvmSubsysGetNsListResult"),
 			true,
 		},
 		{
@@ -1617,10 +1618,10 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
+	if err := os.RemoveAll(*jsonrpc.RpcSock); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *rpcSock)
+	ln, err := net.Listen("unix", *jsonrpc.RpcSock)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
@@ -1679,7 +1680,7 @@ func TestFrontEnd_GetNVMeNamespace(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
-			fmt.Sprintf("mrvl_nvm_ns_get_info: %v", "json: cannot unmarshal array into Go struct field .result of type main.MrvlNvmGetNsInfoResult"),
+			fmt.Sprintf("mrvl_nvm_ns_get_info: %v", "json: cannot unmarshal array into Go struct field .result of type spdk.MrvlNvmGetNsInfoResult"),
 			true,
 		},
 		{
@@ -1748,10 +1749,10 @@ func TestFrontEnd_GetNVMeNamespace(t *testing.T) {
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
+	if err := os.RemoveAll(*jsonrpc.RpcSock); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *rpcSock)
+	ln, err := net.Listen("unix", *jsonrpc.RpcSock)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
@@ -1813,7 +1814,7 @@ func TestFrontEnd_NVMeNamespaceStats(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
-			fmt.Sprintf("mrvl_nvm_ns_get_stats: %v", "json: cannot unmarshal array into Go struct field .result of type main.MrvlNvmGetNsStatsResult"),
+			fmt.Sprintf("mrvl_nvm_ns_get_stats: %v", "json: cannot unmarshal array into Go struct field .result of type spdk.MrvlNvmGetNsStatsResult"),
 			true,
 		},
 		{
@@ -1880,10 +1881,10 @@ func TestFrontEnd_NVMeNamespaceStats(t *testing.T) {
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
+	if err := os.RemoveAll(*jsonrpc.RpcSock); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *rpcSock)
+	ln, err := net.Listen("unix", *jsonrpc.RpcSock)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
@@ -2002,10 +2003,10 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
+	if err := os.RemoveAll(*jsonrpc.RpcSock); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *rpcSock)
+	ln, err := net.Listen("unix", *jsonrpc.RpcSock)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
@@ -2112,10 +2113,10 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
+	if err := os.RemoveAll(*jsonrpc.RpcSock); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *rpcSock)
+	ln, err := net.Listen("unix", *jsonrpc.RpcSock)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
@@ -2222,10 +2223,10 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
+	if err := os.RemoveAll(*jsonrpc.RpcSock); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *rpcSock)
+	ln, err := net.Listen("unix", *jsonrpc.RpcSock)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
