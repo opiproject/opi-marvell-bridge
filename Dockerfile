@@ -11,9 +11,11 @@ COPY go.sum ./
 RUN go mod download
 
 # build an app
-COPY *.go ./
-RUN go build -v -buildmode=plugin  -o /opi-marvell-bridge.so ./frontend.go ./spdk.go ./jsonrpc.go \
- && go build -v -buildmode=default -o /opi-marvell-bridge    ./main.go
+COPY cmd/ cmd/
+COPY pkg/ pkg/
+WORKDIR /app/cmd
+RUN go build -v -buildmode=plugin  -o /opi-marvell-bridge.so \
+    && go build -v -buildmode=default -o /opi-marvell-bridge
 
 # second stage to reduce image size
 FROM alpine:3.17
