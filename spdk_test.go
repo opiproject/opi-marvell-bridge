@@ -2,7 +2,7 @@
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
 // Copyright (C) 2022 Marvell International Ltd.
 
-package spdk
+package main
 
 import (
 	"testing"
