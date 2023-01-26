@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"google.golang.org/protobuf/proto"
 	"log"
 	"net"
 	"os"
@@ -21,6 +20,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
@@ -64,9 +64,9 @@ func spdkMockServer(l net.Listener, toSend []string) {
 		}
 
 		log.Printf("SPDK mockup server: got : %s", string(data))
-		log.Printf("SPDK mockup server: snd : %s", string(spdk))
+		log.Printf("SPDK mockup server: snd : %s", spdk)
 
-		_, err = fd.Write([]byte(string(spdk)))
+		_, err = fd.Write([]byte(spdk))
 		if err != nil {
 			log.Fatal("Write: ", err)
 		}
@@ -189,11 +189,21 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	ln := startSpdkMockupServer()
-	defer ln.Close()
+	defer func(ln net.Listener) {
+		err := ln.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -251,7 +261,12 @@ func TestFrontEnd_UpdateNVMeSubsystem(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// run tests
@@ -333,11 +348,21 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	ln := startSpdkMockupServer()
-	defer ln.Close()
+	defer func(ln net.Listener) {
+		err := ln.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -437,11 +462,21 @@ func TestFrontEnd_GetNVMeSubsystem(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	ln := startSpdkMockupServer()
-	defer ln.Close()
+	defer func(ln net.Listener) {
+		err := ln.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -553,7 +588,12 @@ func TestFrontEnd_NVMeSubsystemStats(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
@@ -564,7 +604,12 @@ func TestFrontEnd_NVMeSubsystemStats(t *testing.T) {
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
-	defer ln.Close()
+	defer func(ln net.Listener) {
+		err := ln.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -692,7 +737,12 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
@@ -703,7 +753,12 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
-	defer ln.Close()
+	defer func(ln net.Listener) {
+		err := ln.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -839,7 +894,12 @@ func TestFrontEnd_UpdateNVMeController(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
@@ -850,7 +910,12 @@ func TestFrontEnd_UpdateNVMeController(t *testing.T) {
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
-	defer ln.Close()
+	defer func(ln net.Listener) {
+		err := ln.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -971,7 +1036,12 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
@@ -982,7 +1052,12 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
-	defer ln.Close()
+	defer func(ln net.Listener) {
+		err := ln.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -1084,7 +1159,12 @@ func TestFrontEnd_GetNVMeController(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
@@ -1095,7 +1175,12 @@ func TestFrontEnd_GetNVMeController(t *testing.T) {
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
-	defer ln.Close()
+	defer func(ln net.Listener) {
+		err := ln.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -1211,7 +1296,12 @@ func TestFrontEnd_NVMeControllerStats(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
@@ -1222,7 +1312,12 @@ func TestFrontEnd_NVMeControllerStats(t *testing.T) {
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
-	defer ln.Close()
+	defer func(ln net.Listener) {
+		err := ln.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -1362,7 +1457,12 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
@@ -1373,7 +1473,12 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
-	defer ln.Close()
+	defer func(ln net.Listener) {
+		err := ln.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -1431,7 +1536,12 @@ func TestFrontEnd_UpdateNVMeNamespace(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// run tests
@@ -1549,7 +1659,12 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
@@ -1560,7 +1675,12 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
-	defer ln.Close()
+	defer func(ln net.Listener) {
+		err := ln.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -1675,7 +1795,12 @@ func TestFrontEnd_GetNVMeNamespace(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
@@ -1686,7 +1811,12 @@ func TestFrontEnd_GetNVMeNamespace(t *testing.T) {
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
-	defer ln.Close()
+	defer func(ln net.Listener) {
+		err := ln.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -1802,7 +1932,12 @@ func TestFrontEnd_NVMeNamespaceStats(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
@@ -1813,7 +1948,12 @@ func TestFrontEnd_NVMeNamespaceStats(t *testing.T) {
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
-	defer ln.Close()
+	defer func(ln net.Listener) {
+		err := ln.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -1919,7 +2059,12 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
@@ -1930,7 +2075,12 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
-	defer ln.Close()
+	defer func(ln net.Listener) {
+		err := ln.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -2024,7 +2174,12 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
@@ -2035,7 +2190,12 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
-	defer ln.Close()
+	defer func(ln net.Listener) {
+		err := ln.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -2129,7 +2289,12 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
 	// start SPDK mockup server
@@ -2140,7 +2305,12 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
-	defer ln.Close()
+	defer func(ln net.Listener) {
+		err := ln.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(ln)
 
 	// run tests
 	for _, tt := range tests {
