@@ -2,6 +2,7 @@
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
 // Copyright (C) 2022 Marvell International Ltd.
 
+// main is the main package of the application
 package main
 
 import (
@@ -22,9 +23,9 @@ type server struct {
 	pb.UnimplementedFrontendNvmeServiceServer
 }
 
+// PluginFrontendNvme is the server that we export to load dynamically at runtime
 var PluginFrontendNvme server
 
-// ////////////////////////////////////////////////////////
 var subsystems = map[string]*pb.NVMeSubsystem{}
 
 func (s *server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
@@ -107,7 +108,7 @@ func (s *server) UpdateNVMeSubsystem(ctx context.Context, in *pb.UpdateNVMeSubsy
 
 func (s *server) ListNVMeSubsystems(ctx context.Context, in *pb.ListNVMeSubsystemsRequest) (*pb.ListNVMeSubsystemsResponse, error) {
 	log.Printf("ListNVMeSubsystems: Received from client: %v", in)
-	var result MrvvNvmGetSubsysListResult
+	var result MrvlNvmGetSubsysListResult
 	err := call("mrvl_nvm_get_subsys_list", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -137,7 +138,7 @@ func (s *server) GetNVMeSubsystem(ctx context.Context, in *pb.GetNVMeSubsystemRe
 		return nil, err
 	}
 	// TODO: replace with MRVL code : mrvl_nvm_subsys_get_info ?
-	var result MrvvNvmGetSubsysListResult
+	var result MrvlNvmGetSubsysListResult
 	err := call("mrvl_nvm_get_subsys_list", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
