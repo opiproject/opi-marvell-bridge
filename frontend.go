@@ -81,7 +81,7 @@ func (s *server) DeleteNVMeSubsystem(ctx context.Context, in *pb.DeleteNVMeSubsy
 		Subnqn: subsys.Spec.Nqn,
 	}
 	var result MrvlNvmDeleteSubsystemResult
-	err := call("mrvl_nvm_deletesubsystem", &params, &result)
+	err := call("mrvl_nvm_delete_subsystem", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err

@@ -2236,7 +2236,7 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.Unknown,
-			fmt.Sprintf("mrvl_nvm_deletesubsystem: %v", "EOF"),
+			fmt.Sprintf("mrvl_nvm_delete_subsystem: %v", "EOF"),
 			true,
 		},
 		{
@@ -2245,7 +2245,7 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.Unknown,
-			fmt.Sprintf("mrvl_nvm_deletesubsystem: %v", "json response ID mismatch"),
+			fmt.Sprintf("mrvl_nvm_delete_subsystem: %v", "json response ID mismatch"),
 			true,
 		},
 		{
@@ -2254,7 +2254,7 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":{"status": 1}}`},
 			codes.Unknown,
-			fmt.Sprintf("mrvl_nvm_deletesubsystem: %v", "json response error: myopierr"),
+			fmt.Sprintf("mrvl_nvm_delete_subsystem: %v", "json response error: myopierr"),
 			true,
 		},
 		{
