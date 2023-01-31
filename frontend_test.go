@@ -27,10 +27,16 @@ import (
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 )
 
+var frontendNvmeServiceServer *server //nolint:gochecknoglobals
+
 func dialer() func(context.Context, string) (net.Conn, error) {
 	listener := bufconn.Listen(1024 * 1024)
 	server := grpc.NewServer()
-	frontendNvmeServiceServer := NewServer()
+
+	if frontendNvmeServiceServer == nil {
+		frontendNvmeServiceServer = NewServer()
+	}
+
 	pb.RegisterFrontendNvmeServiceServer(server, frontendNvmeServiceServer)
 
 	go func() {
@@ -51,7 +57,7 @@ func spdkMockServer(l net.Listener, toSend []string) {
 			log.Fatal("accept error:", err)
 		}
 		log.Printf("SPDK mockup server: client connected [%s]", fd.RemoteAddr().Network())
-		log.Printf("SPDK ID [%d]", rpcID)
+		log.Printf("SPDK ID [%d]", frontendNvmeServiceServer.rpcID)
 
 		buf := make([]byte, 512)
 		nr, err := fd.Read(buf)
@@ -61,7 +67,7 @@ func spdkMockServer(l net.Listener, toSend []string) {
 
 		data := buf[0:nr]
 		if strings.Contains(spdk, "%") {
-			spdk = fmt.Sprintf(spdk, rpcID)
+			spdk = fmt.Sprintf(spdk, frontendNvmeServiceServer.rpcID)
 		}
 
 		log.Printf("SPDK mockup server: got : %s", string(data))
@@ -91,7 +97,7 @@ func startSpdkMockupServer() net.Listener {
 }
 
 func startGrpcMockupServer() (context.Context, *grpc.ClientConn) {
-	// start GRPC mockup Server
+	// start GRPC mockup server
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
 	if err != nil {

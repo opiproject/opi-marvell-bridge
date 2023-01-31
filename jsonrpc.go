@@ -16,19 +16,19 @@ import (
 )
 
 var (
-	rpcID   int32 // json request message ID, auto incremented
-	rpcSock = flag.String("mrvl_rpc_sock", "/var/tmp/spdk.sock", "Path to SPDK JSON RPC socket")
+	// json request message ID, auto incremented
+	rpcSock = flag.String("mrvl_rpc_sock", "/var/tmp/spdk.sock", "Path to SPDK JSON RPC socket") //nolint:gochecknoglobals
 )
 
 // low level rpc request/response handling
-func call(method string, args, result interface{}) error {
+func call(method string, args, result interface{}, rpcID *int32) error {
 	type rpcRequest struct {
 		Ver    string `json:"jsonrpc"`
 		ID     int32  `json:"id"`
 		Method string `json:"method"`
 	}
 
-	id := atomic.AddInt32(&rpcID, 1)
+	id := atomic.AddInt32(rpcID, 1)
 	request := rpcRequest{
 		Ver:    "2.0",
 		ID:     id,
