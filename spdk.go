@@ -4,24 +4,15 @@
 
 package main
 
-// MrvlNvmInitParams is empty
-
-// MrvlNvmGetOffloadCapParams is empty
-
-// MrvlNvmGetOffloadCapResult represents a Marvell offload capacity result
-type MrvlNvmGetOffloadCapResult struct {
-	Status            int    `json:"status"`
-	SdkVersion        string `json:"sdk_version"`
-	NvmVersion        string `json:"nvm_version"`
-	NumPcieDomains    int    `json:"num_pcie_domains"`
-	NumPfsPerDomain   int    `json:"num_pfs_per_domain"`
-	NumVfsPerPf       int    `json:"num_vfs_per_pf"`
-	TotalIoqPerPf     int    `json:"total_ioq_per_pf"`
-	MaxIoqPerPf       int    `json:"max_ioq_per_pf"`
-	MaxIoqPerVf       int    `json:"max_ioq_per_vf"`
-	MaxSubsystems     int    `json:"max_subsystems"`
-	MaxNsPerSubsys    int    `json:"max_ns_per_subsys"`
-	MaxCtrlrPerSubsys int    `json:"max_ctrlr_per_subsys"`
+// GetVersionResult represents a Marvell get version result
+type GetVersionResult struct {
+	Version string `json:"version"`
+	Fields  struct {
+		Major  int    `json:"major"`
+		Minor  int    `json:"minor"`
+		Patch  int    `json:"patch"`
+		Suffix string `json:"suffix"`
+	} `json:"fields"`
 }
 
 // MrvlNvmGetSubsysCountParams is empty

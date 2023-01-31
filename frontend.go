@@ -51,25 +51,20 @@ func (s *server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsy
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	var ver MrvlNvmGetOffloadCapResult
-	err = call("mrvl_nvm_get_offload_cap", nil, &ver)
+	var ver GetVersionResult
+	err = call("spdk_get_version", nil, &ver)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", ver)
-	if ver.Status != 0 {
-		msg := fmt.Sprintf("Could not get FW version for NQN create request: %s", in.NvMeSubsystem.Spec.Nqn)
-		log.Print(msg)
-		return nil, status.Errorf(codes.InvalidArgument, msg)
-	}
 	response := &pb.NVMeSubsystem{}
 	err = deepcopier.Copy(in.NvMeSubsystem).To(response)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	response.Status = &pb.NVMeSubsystemStatus{FirmwareRevision: ver.SdkVersion}
+	response.Status = &pb.NVMeSubsystemStatus{FirmwareRevision: ver.Version}
 	subsystems[in.NvMeSubsystem.Spec.Id.Value] = response
 	return response, nil
 }
