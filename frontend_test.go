@@ -30,7 +30,8 @@ import (
 func dialer() func(context.Context, string) (net.Conn, error) {
 	listener := bufconn.Listen(1024 * 1024)
 	server := grpc.NewServer()
-	pb.RegisterFrontendNvmeServiceServer(server, &PluginFrontendNvme)
+	frontendNvmeServiceServer := NewServer()
+	pb.RegisterFrontendNvmeServiceServer(server, frontendNvmeServiceServer)
 
 	go func() {
 		if err := server.Serve(listener); err != nil {

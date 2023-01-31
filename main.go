@@ -15,11 +15,9 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-var (
-	port = flag.Int("port", 50051, "The server port")
-)
-
 func main() {
+	port := flag.Int("port", 50051, "The server port")
+
 	flag.Parse()
 	// Load the plugin
 	plug, err := plugin.Open("/opi-marvell-bridge.so")
@@ -27,17 +25,14 @@ func main() {
 		log.Fatal(err)
 	}
 	// 2. Look for an exported symbol such as a function or variable
-	feNvmeSymbol, err := plug.Lookup("PluginFrontendNvme")
+	newServerFunc, err := plug.Lookup("NewServer")
 	if err != nil {
 		log.Fatal(err)
 	}
-	// 3. Attempt to cast the symbol to the Shipper
-	var feNvme pb.FrontendNvmeServiceServer
-	feNvme, ok := feNvmeSymbol.(pb.FrontendNvmeServiceServer)
-	if !ok {
-		log.Fatal("Invalid feNvme type")
-	}
-	log.Printf("plugin server is %v", feNvme)
+	// 3. Attempt to cast the symbol to the server
+	nvmeServiceServer := newServerFunc.(func() *server)()
+
+	log.Printf("plugin server is %v", nvmeServiceServer)
 	// 4. If everything is ok from the previous assertions, then we can proceed
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
@@ -45,7 +40,7 @@ func main() {
 	}
 	s := grpc.NewServer()
 
-	pb.RegisterFrontendNvmeServiceServer(s, feNvme)
+	pb.RegisterFrontendNvmeServiceServer(s, nvmeServiceServer)
 	reflection.Register(s)
 
 	log.Printf("server listening at %v", lis.Addr())
