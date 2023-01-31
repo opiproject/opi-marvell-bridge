@@ -160,17 +160,6 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 			true,
 		},
 		{
-			"valid request with invalid SPDK version response",
-			&pb.NVMeSubsystem{
-				Spec: spec,
-			},
-			nil,
-			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0}}`, `{"jsonrpc":"2.0","id":%d,"result":{"status":1,"sdk_version":"11.22.06","nvm_version":"1.3","num_pcie_domains":1,"num_pfs_per_domain":1,"num_vfs_per_pf":16,"total_ioq_per_pf":128,"max_ioq_per_pf":128,"max_ioq_per_vf":128,"max_subsystems":16,"max_ns_per_subsys":8,"max_ctrlr_per_subsys":16}}`},
-			codes.InvalidArgument,
-			fmt.Sprintf("Could not get FW version for NQN create request: %v", "nqn.2022-09.io.spdk:opi3"),
-			true,
-		},
-		{
 			"valid request with valid SPDK response",
 			&pb.NVMeSubsystem{
 				Spec: spec,
@@ -178,10 +167,10 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 			&pb.NVMeSubsystem{
 				Spec: spec,
 				Status: &pb.NVMeSubsystemStatus{
-					FirmwareRevision: "11.22.06",
+					FirmwareRevision: "SPDK v20.10",
 				},
 			},
-			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0}}`, `{"jsonrpc":"2.0","id":%d,"result":{"status":0,"sdk_version":"11.22.06","nvm_version":"1.3","num_pcie_domains":1,"num_pfs_per_domain":1,"num_vfs_per_pf":16,"total_ioq_per_pf":128,"max_ioq_per_pf":128,"max_ioq_per_vf":128,"max_subsystems":16,"max_ns_per_subsys":8,"max_ctrlr_per_subsys":16}}`},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0}}`, `{"jsonrpc":"2.0","id":%d,"result":{"version":"SPDK v20.10","fields":{"major":20,"minor":10,"patch":0,"suffix":""}}}`},
 			codes.OK,
 			"",
 			true,
