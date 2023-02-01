@@ -381,10 +381,11 @@ func (s *server) NVMeControllerStats(ctx context.Context, in *pb.NVMeControllerS
 	}
 
 	params := MrvlNvmGetCtrlrStatsParams{
-		Subnqn: subsys.Spec.Nqn,
+		Subnqn:  subsys.Spec.Nqn,
+		CtrlrID: int(controller.Spec.NvmeControllerId),
 	}
 	var result MrvlNvmGetCtrlrStatsResult
-	err := call("mrvl_nvm_ctrlr_get_stats", &params, &result)
+	err := call("mrvl_nvm_get_ctrlr_stats", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
