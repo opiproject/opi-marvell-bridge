@@ -305,9 +305,17 @@ func (s *server) UpdateNVMeController(ctx context.Context, in *pb.UpdateNVMeCont
 
 func (s *server) ListNVMeControllers(ctx context.Context, in *pb.ListNVMeControllersRequest) (*pb.ListNVMeControllersResponse, error) {
 	log.Printf("ListNVMeControllers: Received from client: %v", in)
-	// TODO: missing MrvlNvmSubsysGetCtrlrListParams
+	subsys, ok := subsystems[in.Parent]
+	if !ok {
+		err := fmt.Errorf("unable to find key %s", in.Parent)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	params := MrvlNvmSubsysGetCtrlrListParams{
+		Subnqn: subsys.Spec.Nqn,
+	}
 	var result MrvlNvmSubsysGetCtrlrListResult
-	err := call("mrvl_nvm_subsys_get_ctrlr_list", nil, &result)
+	err := call("mrvl_nvm_subsys_get_ctrlr_list", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
