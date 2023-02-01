@@ -243,7 +243,7 @@ func (s *server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 
 	params := MrvlNvmSubsysRemoveCtrlrParams{
 		Subnqn:  subsys.Spec.Nqn,
-		CntlrID: int(controller.Spec.NvmeControllerId),
+		CtrlrID: int(controller.Spec.NvmeControllerId),
 	}
 	var result MrvlNvmSubsysRemoveCtrlrResult
 	err := call("mrvl_nvm_subsys_remove_ctrlr", &params, &result)
