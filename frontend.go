@@ -199,11 +199,10 @@ func (s *server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 		PcieDomainID: int(in.NvMeController.Spec.PcieId.PortId),
 		PfID:         int(in.NvMeController.Spec.PcieId.PhysicalFunction),
 		VfID:         int(in.NvMeController.Spec.PcieId.VirtualFunction),
-		CtrlID:       int(in.NvMeController.Spec.NvmeControllerId),
+		CtrlrID:      int(in.NvMeController.Spec.NvmeControllerId),
 		MaxNsq:       int(in.NvMeController.Spec.MaxNsq),
 		MaxNcq:       int(in.NvMeController.Spec.MaxNcq),
-		Sqes:         int(in.NvMeController.Spec.Sqes),
-		Cqes:         int(in.NvMeController.Spec.Cqes),
+		Mqes:         int(in.NvMeController.Spec.Sqes),
 	}
 	var result MrvlNvmSubsysCreateCtrlrResult
 	err := call("mrvl_nvm_subsys_create_ctrlr", &params, &result)
@@ -275,11 +274,10 @@ func (s *server) UpdateNVMeController(ctx context.Context, in *pb.UpdateNVMeCont
 		PcieDomainID: int(in.NvMeController.Spec.PcieId.PortId),
 		PfID:         int(in.NvMeController.Spec.PcieId.PhysicalFunction),
 		VfID:         int(in.NvMeController.Spec.PcieId.VirtualFunction),
-		CtrlID:       int(in.NvMeController.Spec.NvmeControllerId),
+		CtrlrID:      int(in.NvMeController.Spec.NvmeControllerId),
 		MaxNsq:       int(in.NvMeController.Spec.MaxNsq),
 		MaxNcq:       int(in.NvMeController.Spec.MaxNcq),
-		Sqes:         int(in.NvMeController.Spec.Sqes),
-		Cqes:         int(in.NvMeController.Spec.Cqes),
+		Mqes:         int(in.NvMeController.Spec.Sqes),
 	}
 	var result MrvlNvmSubsysCreateCtrlrResult
 	err := call("mrvl_nvm_subsys_update_ctrlr", &params, &result)
