@@ -166,7 +166,8 @@ type MrvlNvmSubsysUpdateCtrlrResult struct {
 // MrvlNvmSubsysRemoveCtrlrParams represents the parameters to a Marvell remove subsystem controller request
 type MrvlNvmSubsysRemoveCtrlrParams struct {
 	Subnqn  string `json:"subnqn"`
-	CntlrID int    `json:"cntlr_id"`
+	CtrlrID int    `json:"ctrlr_id"`
+	Force   int    `json:"force"`
 }
 
 // MrvlNvmSubsysRemoveCtrlrResult represents  a Marvell remove subsystem controller result
