@@ -89,13 +89,12 @@ type MrvlNvmGetSubsysInfoResult struct {
 
 // MrvlNvmSubsysAllocNsParams represents the parameters to a Marvell get subsystem allocate namespace request
 type MrvlNvmSubsysAllocNsParams struct {
-	Subnqn       string `json:"subnqn"`
-	Nguid        string `json:"nguid"`
-	Eui64        string `json:"eui64"`
-	UUID         string `json:"uuid"`
-	NsInstanceID int    `json:"ns_instance_id"`
-	ShareEnable  int    `json:"share_enable"`
-	Bdev         string `json:"bdev"`
+	Subnqn      string `json:"subnqn"`
+	Nguid       string `json:"nguid"`
+	Eui64       string `json:"eui64"`
+	UUID        string `json:"uuid"`
+	ShareEnable int    `json:"share_enable"`
+	Bdev        string `json:"bdev"`
 }
 
 // MrvlNvmSubsysAllocNsResult represents a Marvell get subsystem alloc namespace result
@@ -244,7 +243,7 @@ type MrvlNvmGetNsInfoResult struct {
 // MrvlNvmCtrlrAttachNsParams represents the parameters to a Marvell controller attach namespace request
 type MrvlNvmCtrlrAttachNsParams struct {
 	Subnqn       string `json:"subnqn"`
-	CtrlID       int    `json:"ctrl_id"`
+	CtrlrID      int    `json:"ctrlr_id"`
 	NsInstanceID int    `json:"ns_instance_id"`
 }
 

@@ -419,13 +419,12 @@ func (s *server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 	}
 	// TODO: do lookup through VolumeId key instead of using it's value
 	params := MrvlNvmSubsysAllocNsParams{
-		Subnqn:       subsys.Spec.Nqn,
-		Nguid:        in.NvMeNamespace.Spec.Nguid,
-		Eui64:        strconv.FormatInt(in.NvMeNamespace.Spec.Eui64, 10),
-		UUID:         in.NvMeNamespace.Spec.Uuid.Value,
-		NsInstanceID: int(in.NvMeNamespace.Spec.HostNsid),
-		ShareEnable:  0,
-		Bdev:         in.NvMeNamespace.Spec.VolumeId.Value,
+		Subnqn:      subsys.Spec.Nqn,
+		Nguid:       in.NvMeNamespace.Spec.Nguid,
+		Eui64:       strconv.FormatInt(in.NvMeNamespace.Spec.Eui64, 10),
+		UUID:        in.NvMeNamespace.Spec.Uuid.Value,
+		ShareEnable: 1,
+		Bdev:        in.NvMeNamespace.Spec.VolumeId.Value,
 	}
 	var result MrvlNvmSubsysAllocNsResult
 	err := call("mrvl_nvm_subsys_alloc_ns", &params, &result)
@@ -449,7 +448,7 @@ func (s *server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 		}
 		params := MrvlNvmCtrlrAttachNsParams{
 			Subnqn:       subsys.Spec.Nqn,
-			CtrlID:       int(c.Spec.NvmeControllerId),
+			CtrlrID:      int(c.Spec.NvmeControllerId),
 			NsInstanceID: int(in.NvMeNamespace.Spec.HostNsid),
 		}
 		var result MrvlNvmCtrlrAttachNsResult
