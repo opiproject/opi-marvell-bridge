@@ -1013,15 +1013,15 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 			"",
 			true,
 		},
-		// {
-		// 	"valid request with unknown key",
-		// 	"unknown-subsystem-id",
-		// 	nil,
-		// 	[]string{""},
-		// 	codes.Unknown,
-		// 	fmt.Sprintf("unable to find key %v", "unknown-subsystem-id"),
-		// 	false,
-		// },
+		{
+			"valid request with unknown key",
+			"unknown-subsystem-id",
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("unable to find key %v", "unknown-subsystem-id"),
+			false,
+		},
 	}
 
 	ctx, conn := startGrpcMockupServer()
