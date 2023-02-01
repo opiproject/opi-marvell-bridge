@@ -1227,7 +1227,7 @@ func TestFrontEnd_NVMeControllerStats(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
-			fmt.Sprintf("mrvl_nvm_ctrlr_get_stats: %v", "json: cannot unmarshal array into Go struct field .result of type main.MrvlNvmGetCtrlrStatsResult"),
+			fmt.Sprintf("mrvl_nvm_get_ctrlr_stats: %v", "json: cannot unmarshal array into Go struct field .result of type main.MrvlNvmGetCtrlrStatsResult"),
 			true,
 		},
 		{
@@ -1236,7 +1236,7 @@ func TestFrontEnd_NVMeControllerStats(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.Unknown,
-			fmt.Sprintf("mrvl_nvm_ctrlr_get_stats: %v", "EOF"),
+			fmt.Sprintf("mrvl_nvm_get_ctrlr_stats: %v", "EOF"),
 			true,
 		},
 		{
@@ -1245,7 +1245,7 @@ func TestFrontEnd_NVMeControllerStats(t *testing.T) {
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.Unknown,
-			fmt.Sprintf("mrvl_nvm_ctrlr_get_stats: %v", "json response ID mismatch"),
+			fmt.Sprintf("mrvl_nvm_get_ctrlr_stats: %v", "json response ID mismatch"),
 			true,
 		},
 		{
@@ -1254,7 +1254,7 @@ func TestFrontEnd_NVMeControllerStats(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
-			fmt.Sprintf("mrvl_nvm_ctrlr_get_stats: %v", "json response error: myopierr"),
+			fmt.Sprintf("mrvl_nvm_get_ctrlr_stats: %v", "json response error: myopierr"),
 			true,
 		},
 		{
