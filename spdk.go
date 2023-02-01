@@ -138,11 +138,10 @@ type MrvlNvmSubsysCreateCtrlrParams struct {
 	PcieDomainID int    `json:"pcie_domain_id"`
 	PfID         int    `json:"pf_id"`
 	VfID         int    `json:"vf_id"`
-	CtrlID       int    `json:"ctrl_id"`
-	Sqes         int    `json:"sqes"`
-	Cqes         int    `json:"cqes"`
+	CtrlrID      int    `json:"ctrlr_id"`
 	MaxNsq       int    `json:"max_nsq"`
 	MaxNcq       int    `json:"max_ncq"`
+	Mqes         int    `json:"mqes"`
 }
 
 // MrvlNvmSubsysCreateCtrlrResult represents a Marvell create subsystem controller result
