@@ -36,7 +36,7 @@ func (s *server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsy
 		Mn:            in.NvMeSubsystem.Spec.ModelNumber,
 		Sn:            in.NvMeSubsystem.Spec.SerialNumber,
 		MaxNamespaces: int(in.NvMeSubsystem.Spec.MaxNamespaces),
-		MinCtrlrID:    3,
+		MinCtrlrID:    0, // bug in v21.01, should be 0 for now
 		MaxCtrlrID:    256,
 	}
 	var result MrvlNvmCreateSubsystemResult
@@ -244,6 +244,7 @@ func (s *server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 	params := MrvlNvmSubsysRemoveCtrlrParams{
 		Subnqn:  subsys.Spec.Nqn,
 		CtrlrID: int(controller.Spec.NvmeControllerId),
+		Force:   1,
 	}
 	var result MrvlNvmSubsysRemoveCtrlrResult
 	err := call("mrvl_nvm_subsys_remove_ctrlr", &params, &result)
@@ -516,7 +517,7 @@ func (s *server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNames
 		NsInstanceID: int(namespace.Spec.HostNsid),
 	}
 	var result MrvlNvmSubsysUnallocNsResult
-	err := call(" mrvl_nvm_subsys_unalloc_ns", &params, &result)
+	err := call("mrvl_nvm_subsys_unalloc_ns", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -621,7 +622,7 @@ func (s *server) NVMeNamespaceStats(ctx context.Context, in *pb.NVMeNamespaceSta
 		NsInstanceID: int(namespace.Spec.HostNsid),
 	}
 	var result MrvlNvmGetNsStatsResult
-	err := call("mrvl_nvm_ns_get_stats", &params, &result)
+	err := call("mrvl_nvm_get_ns_stats", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
