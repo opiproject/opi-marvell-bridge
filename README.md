@@ -1,4 +1,4 @@
-# OPI storage gRPC to Marvell SPDK json-rpc bridge
+# OPI gRPC to Marvell SDK bridge third party repo
 
 [![Linters](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/linters.yml/badge.svg)](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/linters.yml)
 [![tests](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/go.yml/badge.svg)](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/go.yml)
@@ -10,7 +10,7 @@
 [![Pulls](https://img.shields.io/docker/pulls/opiproject/opi-marvell-bridge.svg?logo=docker&style=flat&label=Pulls)](https://hub.docker.com/r/opiproject/opi-marvell-bridge)
 [![Last Release](https://img.shields.io/github/v/release/opiproject/opi-marvell-bridge?label=Latest&style=flat-square&logo=go)](https://github.com/opiproject/opi-marvell-bridge/releases)
 
-This is a Marvell plugin to OPI storage APIs based on SPDK.
+This is a Marvell app (bridge) to OPI APIs for storage, inventory, ipsec and networking (future).
 
 ## I Want To Contribute
 
