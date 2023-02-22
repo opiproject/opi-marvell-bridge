@@ -10,17 +10,16 @@ COPY go.mod ./
 COPY go.sum ./
 RUN go mod download
 
+ENV CGO_ENABLED=0
+
 # build an app
 COPY cmd/ cmd/
 COPY pkg/ pkg/
-RUN go build -v -buildmode=plugin  -o /opi-marvell-bridge.so ./pkg/... \
- && go build -v -buildmode=default -o /opi-marvell-bridge    ./cmd/...
+RUN go build -v -o /opi-marvell-bridge ./cmd/...
 
 # second stage to reduce image size
 FROM alpine:3.17
-RUN apk add --no-cache libc6-compat
 COPY --from=builder /opi-marvell-bridge /
-COPY --from=builder /opi-marvell-bridge.so /
 COPY --from=docker.io/fullstorydev/grpcurl:v1.8.7-alpine /bin/grpcurl /usr/local/bin/
 EXPOSE 50051
 CMD [ "/opi-marvell-bridge", "-port=50051" ]
