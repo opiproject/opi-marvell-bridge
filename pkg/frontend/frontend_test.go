@@ -44,18 +44,6 @@ func dialer() func(context.Context, string) (net.Conn, error) {
 	}
 }
 
-func startSpdkMockupServer() net.Listener {
-	// start SPDK mockup server
-	if err := os.RemoveAll(*server.RPCSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *server.RPCSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
-	return ln
-}
-
 func startGrpcMockupServer() (context.Context, *grpc.ClientConn) {
 	// start GRPC mockup Server
 	ctx := context.Background()
@@ -153,7 +141,7 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	ln := startSpdkMockupServer()
+	ln := server.StartSpdkMockupServer()
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -312,7 +300,7 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	ln := startSpdkMockupServer()
+	ln := server.StartSpdkMockupServer()
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -426,7 +414,7 @@ func TestFrontEnd_GetNVMeSubsystem(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	ln := startSpdkMockupServer()
+	ln := server.StartSpdkMockupServer()
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
