@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"reflect"
 	"testing"
 
@@ -540,14 +539,7 @@ func TestFrontEnd_NVMeSubsystemStats(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*server.RPCSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *server.RPCSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := server.StartSpdkMockupServer()
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -689,14 +681,7 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*server.RPCSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *server.RPCSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := server.StartSpdkMockupServer()
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -846,14 +831,7 @@ func TestFrontEnd_UpdateNVMeController(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*server.RPCSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *server.RPCSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := server.StartSpdkMockupServer()
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -988,14 +966,7 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*server.RPCSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *server.RPCSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := server.StartSpdkMockupServer()
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -1111,14 +1082,7 @@ func TestFrontEnd_GetNVMeController(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*server.RPCSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *server.RPCSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := server.StartSpdkMockupServer()
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -1248,14 +1212,7 @@ func TestFrontEnd_NVMeControllerStats(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*server.RPCSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *server.RPCSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := server.StartSpdkMockupServer()
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -1409,14 +1366,7 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*server.RPCSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *server.RPCSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := server.StartSpdkMockupServer()
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -1611,14 +1561,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*server.RPCSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *server.RPCSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := server.StartSpdkMockupServer()
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -1747,14 +1690,7 @@ func TestFrontEnd_GetNVMeNamespace(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*server.RPCSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *server.RPCSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := server.StartSpdkMockupServer()
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -1884,14 +1820,7 @@ func TestFrontEnd_NVMeNamespaceStats(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*server.RPCSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *server.RPCSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := server.StartSpdkMockupServer()
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -2011,14 +1940,7 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*server.RPCSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *server.RPCSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := server.StartSpdkMockupServer()
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -2126,14 +2048,7 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*server.RPCSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *server.RPCSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := server.StartSpdkMockupServer()
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -2241,14 +2156,7 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*server.RPCSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *server.RPCSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := server.StartSpdkMockupServer()
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
