@@ -2,8 +2,8 @@
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
 // Copyright (C) 2022 Marvell International Ltd.
 
-// Package frontend implememnts the FrontEnd APIs (host facing) of the storage Server
-package frontend
+// Package models holds definitions for SPDK json RPC structs
+package models
 
 // GetVersionResult represents a Marvell get version result
 type GetVersionResult struct {

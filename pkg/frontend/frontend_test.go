@@ -477,7 +477,7 @@ func TestFrontEnd_NVMeSubsystemStats(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
-			fmt.Sprintf("mrvl_nvm_subsys_get_info: %v", "json: cannot unmarshal array into Go struct field .result of type frontend.MrvlNvmGetSubsysInfoResult"),
+			fmt.Sprintf("mrvl_nvm_subsys_get_info: %v", "json: cannot unmarshal array into Go struct field .result of type models.MrvlNvmGetSubsysInfoResult"),
 			true,
 		},
 		{
@@ -1146,7 +1146,7 @@ func TestFrontEnd_NVMeControllerStats(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
-			fmt.Sprintf("mrvl_nvm_get_ctrlr_stats: %v", "json: cannot unmarshal array into Go struct field .result of type frontend.MrvlNvmGetCtrlrStatsResult"),
+			fmt.Sprintf("mrvl_nvm_get_ctrlr_stats: %v", "json: cannot unmarshal array into Go struct field .result of type models.MrvlNvmGetCtrlrStatsResult"),
 			true,
 		},
 		{
@@ -1486,7 +1486,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
-			fmt.Sprintf("mrvl_nvm_subsys_get_ns_list: %v", "json: cannot unmarshal array into Go struct field .result of type frontend.MrvlNvmSubsysGetNsListResult"),
+			fmt.Sprintf("mrvl_nvm_subsys_get_ns_list: %v", "json: cannot unmarshal array into Go struct field .result of type models.MrvlNvmSubsysGetNsListResult"),
 			true,
 		},
 		{
@@ -1622,7 +1622,7 @@ func TestFrontEnd_GetNVMeNamespace(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
-			fmt.Sprintf("mrvl_nvm_ns_get_info: %v", "json: cannot unmarshal array into Go struct field .result of type frontend.MrvlNvmGetNsInfoResult"),
+			fmt.Sprintf("mrvl_nvm_ns_get_info: %v", "json: cannot unmarshal array into Go struct field .result of type models.MrvlNvmGetNsInfoResult"),
 			true,
 		},
 		{
@@ -1754,7 +1754,7 @@ func TestFrontEnd_NVMeNamespaceStats(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
-			fmt.Sprintf("mrvl_nvm_get_ns_stats: %v", "json: cannot unmarshal array into Go struct field .result of type frontend.MrvlNvmGetNsStatsResult"),
+			fmt.Sprintf("mrvl_nvm_get_ns_stats: %v", "json: cannot unmarshal array into Go struct field .result of type models.MrvlNvmGetNsStatsResult"),
 			true,
 		},
 		{
