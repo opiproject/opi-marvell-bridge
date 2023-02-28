@@ -5,17 +5,6 @@
 // Package models holds definitions for SPDK json RPC structs
 package models
 
-// GetVersionResult represents a Marvell get version result
-type GetVersionResult struct {
-	Version string `json:"version"`
-	Fields  struct {
-		Major  int    `json:"major"`
-		Minor  int    `json:"minor"`
-		Patch  int    `json:"patch"`
-		Suffix string `json:"suffix"`
-	} `json:"fields"`
-}
-
 // MrvlNvmGetSubsysCountParams is empty
 
 // MrvlNvmGetSubMrvvNvmGetSubsysListParams is empty
