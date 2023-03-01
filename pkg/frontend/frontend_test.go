@@ -44,14 +44,7 @@ func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, erro
 }
 
 // TODO: move to a separate (test/server) package to avoid duplication
-func startGrpcMockupServer() (context.Context, *grpc.ClientConn) {
-	// start GRPC mockup Server
-	opiSpdkServer := NewServer()
-	return startPreConfiguredGrpcMockupServer(opiSpdkServer)
-}
-
-// TODO: move to a separate (test/server) package to avoid duplication
-func startPreConfiguredGrpcMockupServer(opiSpdkServer *Server) (context.Context, *grpc.ClientConn) {
+func startGrpcMockupServer(opiSpdkServer *Server) (context.Context, *grpc.ClientConn) {
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer(opiSpdkServer)))
 	if err != nil {
@@ -59,6 +52,39 @@ func startPreConfiguredGrpcMockupServer(opiSpdkServer *Server) (context.Context,
 	}
 	return ctx, conn
 }
+
+var (
+	testSubsystem = pb.NVMeSubsystem{
+		Spec: &pb.NVMeSubsystemSpec{
+			Id:  &pc.ObjectKey{Value: "subsystem-test"},
+			Nqn: "nqn.2022-09.io.spdk:opi3",
+		},
+	}
+
+	testController = pb.NVMeController{
+		Spec: &pb.NVMeControllerSpec{
+			Id:               &pc.ObjectKey{Value: "controller-test"},
+			SubsystemId:      &pc.ObjectKey{Value: "subsystem-test"},
+			PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
+			NvmeControllerId: 17,
+		},
+		Status: &pb.NVMeControllerStatus{
+			Active: true,
+		},
+	}
+
+	testNamespace = pb.NVMeNamespace{
+		Spec: &pb.NVMeNamespaceSpec{
+			Id:          &pc.ObjectKey{Value: "namespace-test"},
+			HostNsid:    22,
+			SubsystemId: testSubsystem.Spec.Id,
+		},
+		Status: &pb.NVMeNamespaceStatus{
+			PciState:     2,
+			PciOperState: 1,
+		},
+	}
+)
 
 func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 	spec := &pb.NVMeSubsystemSpec{
@@ -138,7 +164,11 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
+	opiSpdkServer := NewServer()
+	opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+	opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+	opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+	ctx, conn := startGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
@@ -202,7 +232,11 @@ func TestFrontEnd_UpdateNVMeSubsystem(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
+	opiSpdkServer := NewServer()
+	opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+	opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+	opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+	ctx, conn := startGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
@@ -290,7 +324,11 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
+	opiSpdkServer := NewServer()
+	opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+	opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+	opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+	ctx, conn := startGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
@@ -394,7 +432,11 @@ func TestFrontEnd_GetNVMeSubsystem(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
+	opiSpdkServer := NewServer()
+	opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+	opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+	opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+	ctx, conn := startGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
@@ -510,7 +552,11 @@ func TestFrontEnd_NVMeSubsystemStats(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
+	opiSpdkServer := NewServer()
+	opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+	opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+	opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+	ctx, conn := startGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
@@ -642,7 +688,11 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
+	opiSpdkServer := NewServer()
+	opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+	opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+	opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+	ctx, conn := startGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
@@ -782,7 +832,11 @@ func TestFrontEnd_UpdateNVMeController(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
+	opiSpdkServer := NewServer()
+	opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+	opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+	opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+	ctx, conn := startGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
@@ -907,7 +961,11 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
+	opiSpdkServer := NewServer()
+	opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+	opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+	opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+	ctx, conn := startGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
@@ -993,7 +1051,8 @@ func TestFrontEnd_GetNVMeController(t *testing.T) {
 			"controller-test",
 			&pb.NVMeController{
 				Spec: &pb.NVMeControllerSpec{
-					Id: &pc.ObjectKey{Value: "controller-test"},
+					Id:               &pc.ObjectKey{Value: "controller-test"},
+					NvmeControllerId: 17,
 				},
 				Status: &pb.NVMeControllerStatus{Active: true},
 			},
@@ -1013,7 +1072,11 @@ func TestFrontEnd_GetNVMeController(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
+	opiSpdkServer := NewServer()
+	opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+	opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+	opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+	ctx, conn := startGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
@@ -1133,7 +1196,11 @@ func TestFrontEnd_NVMeControllerStats(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
+	opiSpdkServer := NewServer()
+	opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+	opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+	opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+	ctx, conn := startGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
@@ -1277,7 +1344,11 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
+	opiSpdkServer := NewServer()
+	opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+	opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+	opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+	ctx, conn := startGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
@@ -1341,7 +1412,11 @@ func TestFrontEnd_UpdateNVMeNamespace(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
+	opiSpdkServer := NewServer()
+	opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+	opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+	opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+	ctx, conn := startGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
@@ -1465,7 +1540,11 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
+	opiSpdkServer := NewServer()
+	opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+	opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+	opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+	ctx, conn := startGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
@@ -1584,7 +1663,11 @@ func TestFrontEnd_GetNVMeNamespace(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
+	opiSpdkServer := NewServer()
+	opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+	opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+	opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+	ctx, conn := startGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
@@ -1704,7 +1787,11 @@ func TestFrontEnd_NVMeNamespaceStats(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
+	opiSpdkServer := NewServer()
+	opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+	opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+	opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+	ctx, conn := startGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
@@ -1814,7 +1901,11 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
+	opiSpdkServer := NewServer()
+	opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+	opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+	opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+	ctx, conn := startGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
@@ -1912,7 +2003,11 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
+	opiSpdkServer := NewServer()
+	opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+	opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+	opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+	ctx, conn := startGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
@@ -2010,7 +2105,11 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
+	opiSpdkServer := NewServer()
+	opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+	opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+	opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+	ctx, conn := startGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
