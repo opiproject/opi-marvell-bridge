@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
 // Copyright (C) 2022 Marvell International Ltd.
+// Copyright (C) 2023 Intel Corporation
 
 // Package frontend implememnts the FrontEnd APIs (host facing) of the storage Server
 package frontend
@@ -29,14 +30,18 @@ type Server struct {
 	Subsystems  map[string]*pb.NVMeSubsystem
 	Controllers map[string]*pb.NVMeController
 	Namespaces  map[string]*pb.NVMeNamespace
+
+	rpc server.JSONRPC
 }
 
 // NewServer creates initialized instance of NVMe server
-func NewServer() *Server {
+func NewServer(jsonRPC server.JSONRPC) *Server {
 	return &Server{
 		Subsystems:  make(map[string]*pb.NVMeSubsystem),
 		Controllers: make(map[string]*pb.NVMeController),
 		Namespaces:  make(map[string]*pb.NVMeNamespace),
+
+		rpc: jsonRPC,
 	}
 }
 
@@ -53,7 +58,7 @@ func (s *Server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsy
 		MaxCtrlrID:    256,
 	}
 	var result models.MrvlNvmCreateSubsystemResult
-	err := server.Call("mrvl_nvm_create_subsystem", &params, &result)
+	err := s.rpc.Call("mrvl_nvm_create_subsystem", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -65,7 +70,7 @@ func (s *Server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsy
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	var ver spdk.GetVersionResult
-	err = server.Call("spdk_get_version", nil, &ver)
+	err = s.rpc.Call("spdk_get_version", nil, &ver)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -95,7 +100,7 @@ func (s *Server) DeleteNVMeSubsystem(ctx context.Context, in *pb.DeleteNVMeSubsy
 		Subnqn: subsys.Spec.Nqn,
 	}
 	var result models.MrvlNvmDeleteSubsystemResult
-	err := server.Call("mrvl_nvm_delete_subsystem", &params, &result)
+	err := s.rpc.Call("mrvl_nvm_delete_subsystem", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -120,7 +125,7 @@ func (s *Server) UpdateNVMeSubsystem(ctx context.Context, in *pb.UpdateNVMeSubsy
 func (s *Server) ListNVMeSubsystems(ctx context.Context, in *pb.ListNVMeSubsystemsRequest) (*pb.ListNVMeSubsystemsResponse, error) {
 	log.Printf("ListNVMeSubsystems: Received from client: %v", in)
 	var result models.MrvlNvmGetSubsysListResult
-	err := server.Call("mrvl_nvm_get_subsys_list", nil, &result)
+	err := s.rpc.Call("mrvl_nvm_get_subsys_list", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -151,7 +156,7 @@ func (s *Server) GetNVMeSubsystem(ctx context.Context, in *pb.GetNVMeSubsystemRe
 	}
 	// TODO: replace with MRVL code : mrvl_nvm_subsys_get_info ?
 	var result models.MrvlNvmGetSubsysListResult
-	err := server.Call("mrvl_nvm_get_subsys_list", nil, &result)
+	err := s.rpc.Call("mrvl_nvm_get_subsys_list", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -186,7 +191,7 @@ func (s *Server) NVMeSubsystemStats(ctx context.Context, in *pb.NVMeSubsystemSta
 		Subnqn: subsys.Spec.Nqn,
 	}
 	var result models.MrvlNvmGetSubsysInfoResult
-	err := server.Call("mrvl_nvm_subsys_get_info", &params, &result)
+	err := s.rpc.Call("mrvl_nvm_subsys_get_info", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -221,7 +226,7 @@ func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 		Mqes:         int(in.NvMeController.Spec.Sqes),
 	}
 	var result models.MrvlNvmSubsysCreateCtrlrResult
-	err := server.Call("mrvl_nvm_subsys_create_ctrlr", &params, &result)
+	err := s.rpc.Call("mrvl_nvm_subsys_create_ctrlr", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -264,7 +269,7 @@ func (s *Server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 		Force:   1,
 	}
 	var result models.MrvlNvmSubsysRemoveCtrlrResult
-	err := server.Call("mrvl_nvm_subsys_remove_ctrlr", &params, &result)
+	err := s.rpc.Call("mrvl_nvm_subsys_remove_ctrlr", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -299,7 +304,7 @@ func (s *Server) UpdateNVMeController(ctx context.Context, in *pb.UpdateNVMeCont
 		Mqes:         int(in.NvMeController.Spec.Sqes),
 	}
 	var result models.MrvlNvmSubsysCreateCtrlrResult
-	err := server.Call("mrvl_nvm_subsys_update_ctrlr", &params, &result)
+	err := s.rpc.Call("mrvl_nvm_subsys_update_ctrlr", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -335,7 +340,7 @@ func (s *Server) ListNVMeControllers(ctx context.Context, in *pb.ListNVMeControl
 		Subnqn: subsys.Spec.Nqn,
 	}
 	var result models.MrvlNvmSubsysGetCtrlrListResult
-	err := server.Call("mrvl_nvm_subsys_get_ctrlr_list", &params, &result)
+	err := s.rpc.Call("mrvl_nvm_subsys_get_ctrlr_list", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -373,7 +378,7 @@ func (s *Server) GetNVMeController(ctx context.Context, in *pb.GetNVMeController
 		CtrlrID: int(controller.Spec.NvmeControllerId),
 	}
 	var result models.MrvlNvmGetCtrlrInfoResult
-	err := server.Call("mrvl_nvm_ctrlr_get_info", &params, &result)
+	err := s.rpc.Call("mrvl_nvm_ctrlr_get_info", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -407,7 +412,7 @@ func (s *Server) NVMeControllerStats(ctx context.Context, in *pb.NVMeControllerS
 		CtrlrID: int(controller.Spec.NvmeControllerId),
 	}
 	var result models.MrvlNvmGetCtrlrStatsResult
-	err := server.Call("mrvl_nvm_get_ctrlr_stats", &params, &result)
+	err := s.rpc.Call("mrvl_nvm_get_ctrlr_stats", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -447,7 +452,7 @@ func (s *Server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 		Bdev:        in.NvMeNamespace.Spec.VolumeId.Value,
 	}
 	var result models.MrvlNvmSubsysAllocNsResult
-	err := server.Call("mrvl_nvm_subsys_alloc_ns", &params, &result)
+	err := s.rpc.Call("mrvl_nvm_subsys_alloc_ns", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -472,7 +477,7 @@ func (s *Server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 			NsInstanceID: int(in.NvMeNamespace.Spec.HostNsid),
 		}
 		var result models.MrvlNvmCtrlrAttachNsResult
-		err := server.Call("mrvl_nvm_ctrlr_attach_ns", &params, &result)
+		err := s.rpc.Call("mrvl_nvm_ctrlr_attach_ns", &params, &result)
 		if err != nil {
 			log.Printf("error: %v", err)
 			return nil, err
@@ -520,7 +525,7 @@ func (s *Server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNames
 			NsInstanceID: int(namespace.Spec.HostNsid),
 		}
 		var result models.MrvlNvmCtrlrDetachNsResult
-		err := server.Call("mrvl_nvm_ctrlr_detach_ns", &params, &result)
+		err := s.rpc.Call("mrvl_nvm_ctrlr_detach_ns", &params, &result)
 		if err != nil {
 			log.Printf("error: %v", err)
 			return nil, err
@@ -537,7 +542,7 @@ func (s *Server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNames
 		NsInstanceID: int(namespace.Spec.HostNsid),
 	}
 	var result models.MrvlNvmSubsysUnallocNsResult
-	err := server.Call("mrvl_nvm_subsys_unalloc_ns", &params, &result)
+	err := s.rpc.Call("mrvl_nvm_subsys_unalloc_ns", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -571,7 +576,7 @@ func (s *Server) ListNVMeNamespaces(ctx context.Context, in *pb.ListNVMeNamespac
 		Subnqn: subsys.Spec.Nqn,
 	}
 	var result models.MrvlNvmSubsysGetNsListResult
-	err := server.Call("mrvl_nvm_subsys_get_ns_list", &params, &result)
+	err := s.rpc.Call("mrvl_nvm_subsys_get_ns_list", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -611,7 +616,7 @@ func (s *Server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRe
 		NsInstanceID: int(namespace.Spec.HostNsid),
 	}
 	var result models.MrvlNvmGetNsInfoResult
-	err := server.Call("mrvl_nvm_ns_get_info", &params, &result)
+	err := s.rpc.Call("mrvl_nvm_ns_get_info", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -646,7 +651,7 @@ func (s *Server) NVMeNamespaceStats(ctx context.Context, in *pb.NVMeNamespaceSta
 		NsInstanceID: int(namespace.Spec.HostNsid),
 	}
 	var result models.MrvlNvmGetNsStatsResult
-	err := server.Call("mrvl_nvm_get_ns_stats", &params, &result)
+	err := s.rpc.Call("mrvl_nvm_get_ns_stats", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
