@@ -3,7 +3,7 @@ module github.com/opiproject/opi-marvell-bridge
 go 1.19
 
 require (
-	github.com/opiproject/opi-api v0.0.0-20230303162737-328ef45a14b7
+	github.com/opiproject/opi-api v0.0.0-20230308182040-4d50cc36139e
 	github.com/opiproject/opi-smbios-bridge v0.1.2
 	github.com/opiproject/opi-spdk-bridge v0.1.2-0.20230308145000-9d299cb97d03
 	github.com/opiproject/opi-strongswan-bridge v0.1.1
