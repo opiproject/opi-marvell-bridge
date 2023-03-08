@@ -208,7 +208,6 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 			testEnv.opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
 			testEnv.opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
 
@@ -698,7 +697,6 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-			testEnv.opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
 			testEnv.opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
 
 			request := &pb.CreateNVMeControllerRequest{NvMeController: tt.in}
@@ -1320,7 +1318,6 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 
 			testEnv.opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 			testEnv.opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
-			testEnv.opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
 
 			request := &pb.CreateNVMeNamespaceRequest{NvMeNamespace: tt.in}
 			response, err := testEnv.client.CreateNVMeNamespace(testEnv.ctx, request)
