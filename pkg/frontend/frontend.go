@@ -48,6 +48,14 @@ func NewServer(jsonRPC server.JSONRPC) *Server {
 // CreateNVMeSubsystem creates an NVMe Subsystem
 func (s *Server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("CreateNVMeSubsystem: Received from client: %v", in)
+	// idempotent API when called with same key, should return same object
+	subsys, ok := s.Subsystems[in.NvMeSubsystem.Spec.Id.Value]
+	if ok {
+		log.Printf("Already existing NVMeSubsystem with id %v", in.NvMeSubsystem.Spec.Id.Value)
+		return subsys, nil
+	}
+	// not found, so create a new one
+
 	// TODO: fix const values below
 	params := models.MrvlNvmCreateSubsystemParams{
 		Subnqn:        in.NvMeSubsystem.Spec.Nqn,
@@ -208,6 +216,13 @@ func (s *Server) NVMeSubsystemStats(ctx context.Context, in *pb.NVMeSubsystemSta
 // CreateNVMeController creates an NVMe controller
 func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeControllerRequest) (*pb.NVMeController, error) {
 	log.Printf("CreateNVMeController: Received from client: %v", in)
+	// idempotent API when called with same key, should return same object
+	controller, ok := s.Controllers[in.NvMeController.Spec.Id.Value]
+	if ok {
+		log.Printf("Already existing NVMeController with id %v", in.NvMeController.Spec.Id.Value)
+		return controller, nil
+	}
+	// not found, so create a new one
 	subsys, ok := s.Subsystems[in.NvMeController.Spec.SubsystemId.Value]
 	if !ok {
 		err := fmt.Errorf("unable to find key %s", in.NvMeController.Spec.SubsystemId.Value)
@@ -436,6 +451,13 @@ func (s *Server) NVMeControllerStats(ctx context.Context, in *pb.NVMeControllerS
 // CreateNVMeNamespace creates an NVMe namespace
 func (s *Server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
 	log.Printf("CreateNVMeNamespace: Received from client: %v", in)
+	// idempotent API when called with same key, should return same object
+	namespace, ok := s.Namespaces[in.NvMeNamespace.Spec.Id.Value]
+	if ok {
+		log.Printf("Already existing NVMeNamespace with id %v", in.NvMeNamespace.Spec.Id.Value)
+		return namespace, nil
+	}
+	// not found, so create a new one
 	subsys, ok := s.Subsystems[in.NvMeNamespace.Spec.SubsystemId.Value]
 	if !ok {
 		err := fmt.Errorf("unable to find key %s", in.NvMeNamespace.Spec.SubsystemId.Value)
