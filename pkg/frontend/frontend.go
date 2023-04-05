@@ -152,7 +152,10 @@ func (s *Server) ListNVMeSubsystems(_ context.Context, in *pb.ListNVMeSubsystems
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-
+	if in.PageSize > 0 && int(in.PageSize) < len(result.SubsysList) {
+		log.Printf("Limiting result to: %d", in.PageSize)
+		result.SubsysList = result.SubsysList[:in.PageSize]
+	}
 	Blobarray := make([]*pb.NVMeSubsystem, len(result.SubsysList))
 	for i := range result.SubsysList {
 		r := &result.SubsysList[i]
@@ -381,6 +384,10 @@ func (s *Server) ListNVMeControllers(_ context.Context, in *pb.ListNVMeControlle
 		msg := fmt.Sprintf("Could not list CTRLs: %v", in.Parent)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
+	if in.PageSize > 0 && int(in.PageSize) < len(result.CtrlrIDList) {
+		log.Printf("Limiting result to: %d", in.PageSize)
+		result.CtrlrIDList = result.CtrlrIDList[:in.PageSize]
 	}
 	Blobarray := make([]*pb.NVMeController, len(result.CtrlrIDList))
 	for i := range result.CtrlrIDList {
@@ -632,6 +639,10 @@ func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespaces
 		msg := fmt.Sprintf("Could not list NS: %s", in.Parent)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
+	if in.PageSize > 0 && int(in.PageSize) < len(result.NsList) {
+		log.Printf("Limiting result to: %d", in.PageSize)
+		result.NsList = result.NsList[:in.PageSize]
 	}
 	Blobarray := make([]*pb.NVMeNamespace, len(result.NsList))
 	for i := range result.NsList {
