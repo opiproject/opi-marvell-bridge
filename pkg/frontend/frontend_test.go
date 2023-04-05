@@ -348,6 +348,19 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			-10,
 		},
 		{
+			"pagination overflow",
+			[]*pb.NVMeSubsystem{
+				{Spec: &pb.NVMeSubsystemSpec{Nqn: "nqn.2022-09.io.spdk:opi1"}},
+				{Spec: &pb.NVMeSubsystemSpec{Nqn: "nqn.2022-09.io.spdk:opi2"}},
+				{Spec: &pb.NVMeSubsystemSpec{Nqn: "nqn.2022-09.io.spdk:opi3"}},
+			},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0, "subsys_list": [{"subnqn": "nqn.2022-09.io.spdk:opi1"},{"subnqn": "nqn.2022-09.io.spdk:opi2"},{"subnqn": "nqn.2022-09.io.spdk:opi3"}]}}`},
+			codes.OK,
+			"",
+			true,
+			1000,
+		},
+		{
 			"valid request with valid SPDK response",
 			[]*pb.NVMeSubsystem{
 				{Spec: &pb.NVMeSubsystemSpec{Nqn: "nqn.2022-09.io.spdk:opi1"}},
@@ -943,6 +956,32 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 			-10,
 		},
 		{
+			"pagination overflow",
+			"subsystem-test",
+			[]*pb.NVMeController{
+				{
+					Spec: &pb.NVMeControllerSpec{
+						NvmeControllerId: 1,
+					},
+				},
+				{
+					Spec: &pb.NVMeControllerSpec{
+						NvmeControllerId: 2,
+					},
+				},
+				{
+					Spec: &pb.NVMeControllerSpec{
+						NvmeControllerId: 3,
+					},
+				},
+			},
+			[]string{`{"jsonrpc":"2.0","id":%d,"error":{"code":0,"message":""},"result":{"status":0,"ctrlr_id_list":[{"ctrlr_id":1},{"ctrlr_id":2},{"ctrlr_id":3}]}}`},
+			codes.OK,
+			"",
+			true,
+			1000,
+		},
+		{
 			"valid request with valid SPDK response",
 			"subsystem-test",
 			[]*pb.NVMeController{
@@ -1501,6 +1540,32 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			"negative PageSize is not allowed",
 			false,
 			-10,
+		},
+		{
+			"pagination overflow",
+			"subsystem-test",
+			[]*pb.NVMeNamespace{
+				{
+					Spec: &pb.NVMeNamespaceSpec{
+						HostNsid: 11,
+					},
+				},
+				{
+					Spec: &pb.NVMeNamespaceSpec{
+						HostNsid: 12,
+					},
+				},
+				{
+					Spec: &pb.NVMeNamespaceSpec{
+						HostNsid: 13,
+					},
+				},
+			},
+			[]string{`{"jsonrpc":"2.0","id":%d,"result":{"status":0,"ns_list":[{"ns_instance_id":11,"bdev":"bdev01","ctrlr_id_list":[{"ctrlr_id":1}]},{"ns_instance_id":12,"bdev":"bdev02","ctrlr_id_list":[]},{"ns_instance_id":13,"bdev":"bdev03","ctrlr_id_list":[]}]}}`},
+			codes.OK,
+			"",
+			true,
+			1000,
 		},
 		{
 			"valid request with valid SPDK response",
