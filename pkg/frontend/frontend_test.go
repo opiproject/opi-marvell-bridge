@@ -1814,6 +1814,7 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		missing bool
 	}{
 		{
 			"valid request with invalid SPDK response",
@@ -1823,6 +1824,7 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not detach NS: %v", "namespace-test"),
 			true,
+			false,
 		},
 		{
 			"valid request with invalid SPDK second response",
@@ -1832,6 +1834,7 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not delete NS: %v", "namespace-test"),
 			true,
+			false,
 		},
 		{
 			"valid request with empty SPDK response",
@@ -1841,6 +1844,7 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_ctrlr_detach_ns: %v", "EOF"),
 			true,
+			false,
 		},
 		{
 			"valid request with ID mismatch SPDK response",
@@ -1850,6 +1854,7 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_ctrlr_detach_ns: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		{
 			"valid request with error code from SPDK response",
@@ -1859,6 +1864,7 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_ctrlr_detach_ns: %v", "json response error: myopierr"),
 			true,
+			false,
 		},
 		{
 			"valid request with valid SPDK response",
@@ -1868,6 +1874,7 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			false,
 		},
 		{
 			"valid request with unknown key",
@@ -1877,6 +1884,17 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", "unknown-namespace-id"),
 			false,
+			false,
+		},
+		{
+			"unknown key with missing allowed",
+			"unknown-id",
+			&emptypb.Empty{},
+			[]string{""},
+			codes.OK,
+			"",
+			false,
+			true,
 		},
 	}
 
@@ -1889,7 +1907,7 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 			testEnv.opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 			testEnv.opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
 			testEnv.opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
-			request := &pb.DeleteNVMeNamespaceRequest{Name: tt.in}
+			request := &pb.DeleteNVMeNamespaceRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNVMeNamespace(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
@@ -1917,6 +1935,7 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		missing bool
 	}{
 		{
 			"valid request with invalid SPDK response",
@@ -1926,6 +1945,7 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not delete CTRL: %v", "controller-test"),
 			true,
+			false,
 		},
 		{
 			"valid request with empty SPDK response",
@@ -1935,6 +1955,7 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_subsys_remove_ctrlr: %v", "EOF"),
 			true,
+			false,
 		},
 		{
 			"valid request with ID mismatch SPDK response",
@@ -1944,6 +1965,7 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_subsys_remove_ctrlr: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		{
 			"valid request with error code from SPDK response",
@@ -1953,6 +1975,7 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_subsys_remove_ctrlr: %v", "json response error: myopierr"),
 			true,
+			false,
 		},
 		{
 			"valid request with valid SPDK response",
@@ -1962,6 +1985,7 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			false,
 		},
 		{
 			"valid request with unknown key",
@@ -1971,6 +1995,17 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("error finding controller %v", "unknown-controller-id"),
 			false,
+			false,
+		},
+		{
+			"unknown key with missing allowed",
+			"unknown-id",
+			&emptypb.Empty{},
+			[]string{""},
+			codes.OK,
+			"",
+			false,
+			true,
 		},
 	}
 
@@ -1984,7 +2019,7 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 			testEnv.opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
 			testEnv.opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
 
-			request := &pb.DeleteNVMeControllerRequest{Name: tt.in}
+			request := &pb.DeleteNVMeControllerRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNVMeController(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
@@ -2012,6 +2047,7 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		missing bool
 	}{
 		{
 			"valid request with invalid SPDK response",
@@ -2021,6 +2057,7 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not delete NQN: %v", "nqn.2022-09.io.spdk:opi3"),
 			true,
+			false,
 		},
 		{
 			"valid request with empty SPDK response",
@@ -2030,6 +2067,7 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_delete_subsystem: %v", "EOF"),
 			true,
+			false,
 		},
 		{
 			"valid request with ID mismatch SPDK response",
@@ -2039,6 +2077,7 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_delete_subsystem: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		{
 			"valid request with error code from SPDK response",
@@ -2048,6 +2087,7 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_delete_subsystem: %v", "json response error: myopierr"),
 			true,
+			false,
 		},
 		{
 			"valid request with valid SPDK response",
@@ -2057,6 +2097,7 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			false,
 		},
 		{
 			"valid request with unknown key",
@@ -2066,6 +2107,17 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", "unknown-subsystem-id"),
 			false,
+			false,
+		},
+		{
+			"unknown key with missing allowed",
+			"unknown-id",
+			&emptypb.Empty{},
+			[]string{""},
+			codes.OK,
+			"",
+			false,
+			true,
 		},
 	}
 
@@ -2079,7 +2131,7 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 			testEnv.opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
 			testEnv.opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
 
-			request := &pb.DeleteNVMeSubsystemRequest{Name: tt.in}
+			request := &pb.DeleteNVMeSubsystemRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNVMeSubsystem(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
