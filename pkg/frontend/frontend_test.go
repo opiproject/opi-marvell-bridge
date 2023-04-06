@@ -138,6 +138,7 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		exist   bool
 	}{
 		"valid request with invalid SPDK response": {
 			&pb.NVMeSubsystem{
@@ -148,6 +149,7 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create NQN: %v", "nqn.2022-09.io.spdk:opi3"),
 			true,
+			false,
 		},
 		"valid request with empty SPDK response": {
 			&pb.NVMeSubsystem{
@@ -158,6 +160,7 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_create_subsystem: %v", "EOF"),
 			true,
+			false,
 		},
 		"valid request with ID mismatch SPDK response": {
 			&pb.NVMeSubsystem{
@@ -168,6 +171,7 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_create_subsystem: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		"valid request with error code from SPDK response": {
 			&pb.NVMeSubsystem{
@@ -178,6 +182,7 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_create_subsystem: %v", "json response error: myopierr"),
 			true,
+			false,
 		},
 		"valid request with valid SPDK response": {
 			&pb.NVMeSubsystem{
@@ -193,6 +198,18 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			false,
+		},
+		"already exists": {
+			&pb.NVMeSubsystem{
+				Spec: spec,
+			},
+			&testSubsystem,
+			[]string{""},
+			codes.OK,
+			"",
+			false,
+			true,
 		},
 	}
 
@@ -204,6 +221,9 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 
 			testEnv.opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
 			testEnv.opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+			if tt.exist {
+				testEnv.opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+			}
 
 			request := &pb.CreateNVMeSubsystemRequest{NvMeSubsystem: tt.in}
 			response, err := testEnv.client.CreateNVMeSubsystem(testEnv.ctx, request)
@@ -615,6 +635,7 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		exist   bool
 	}{
 		"valid request with invalid SPDK response": {
 			&pb.NVMeController{
@@ -625,6 +646,7 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create CTRL: %v", "controller-test"),
 			true,
+			false,
 		},
 		"valid request with empty SPDK response": {
 			&pb.NVMeController{
@@ -635,6 +657,7 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_subsys_create_ctrlr: %v", "EOF"),
 			true,
+			false,
 		},
 		"valid request with ID mismatch SPDK response": {
 			&pb.NVMeController{
@@ -645,6 +668,7 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_subsys_create_ctrlr: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		"valid request with error code from SPDK response": {
 			&pb.NVMeController{
@@ -655,6 +679,7 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_subsys_create_ctrlr: %v", "json response error: Invalid parameters"),
 			true,
+			false,
 		},
 		"valid request with valid SPDK response": {
 			&pb.NVMeController{
@@ -685,6 +710,18 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			false,
+		},
+		"already exists": {
+			&pb.NVMeController{
+				Spec: spec,
+			},
+			&testController,
+			[]string{""},
+			codes.OK,
+			"",
+			false,
+			true,
 		},
 	}
 
@@ -696,6 +733,9 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 
 			testEnv.opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 			testEnv.opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+			if tt.exist {
+				testEnv.opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+			}
 
 			request := &pb.CreateNVMeControllerRequest{NvMeController: tt.in}
 			response, err := testEnv.client.CreateNVMeController(testEnv.ctx, request)
@@ -1241,6 +1281,7 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		exist   bool
 	}{
 		"valid request with invalid SPDK response": {
 			&pb.NVMeNamespace{
@@ -1251,6 +1292,7 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create NS: %v", "namespace-test"),
 			true,
+			false,
 		},
 		"valid request with empty SPDK response": {
 			&pb.NVMeNamespace{
@@ -1261,6 +1303,7 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_subsys_alloc_ns: %v", "EOF"),
 			true,
+			false,
 		},
 		"valid request with ID mismatch SPDK response": {
 			&pb.NVMeNamespace{
@@ -1271,6 +1314,7 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_subsys_alloc_ns: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		"valid request with error code from SPDK response": {
 			&pb.NVMeNamespace{
@@ -1281,6 +1325,7 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_subsys_alloc_ns: %v", "json response error: myopierr"),
 			true,
+			false,
 		},
 		"valid request with valid SPDK response": {
 			&pb.NVMeNamespace{
@@ -1313,6 +1358,7 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			false,
 		},
 		"valid request with invalid SPDK second attach response": {
 			&pb.NVMeNamespace{
@@ -1322,6 +1368,18 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0, "ns_instance_id": 17}}`, `{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not attach NS: %v", "namespace-test"),
+			true,
+			false,
+		},
+		"already exists": {
+			&pb.NVMeNamespace{
+				Spec: spec,
+			},
+			&testNamespace,
+			[]string{""},
+			codes.OK,
+			"",
+			false,
 			true,
 		},
 	}
@@ -1334,6 +1392,9 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 
 			testEnv.opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 			testEnv.opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
+			if tt.exist {
+				testEnv.opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+			}
 
 			request := &pb.CreateNVMeNamespaceRequest{NvMeNamespace: tt.in}
 			response, err := testEnv.client.CreateNVMeNamespace(testEnv.ctx, request)
