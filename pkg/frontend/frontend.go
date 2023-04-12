@@ -18,6 +18,7 @@ import (
 	spdk "github.com/opiproject/opi-spdk-bridge/pkg/models"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
+	"github.com/google/uuid"
 	"github.com/ulule/deepcopier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -152,9 +153,12 @@ func (s *Server) ListNVMeSubsystems(_ context.Context, in *pb.ListNVMeSubsystems
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	if in.PageSize > 0 && int(in.PageSize) < len(result.SubsysList) {
-		log.Printf("Limiting result len(%d) to [%d:%d]", len(result.SubsysList), offset, size)
-		result.SubsysList = result.SubsysList[:in.PageSize]
+	token, hasMoreElements := "", false
+	log.Printf("Limiting result len(%d) to [%d:%d]", len(result.SubsysList), offset, size)
+	result.SubsysList, hasMoreElements = server.LimitPagination(result.SubsysList, offset, size)
+	if hasMoreElements {
+		token = uuid.New().String()
+		s.Pagination[token] = offset + size
 	}
 	Blobarray := make([]*pb.NVMeSubsystem, len(result.SubsysList))
 	for i := range result.SubsysList {
@@ -385,9 +389,12 @@ func (s *Server) ListNVMeControllers(_ context.Context, in *pb.ListNVMeControlle
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	if in.PageSize > 0 && int(in.PageSize) < len(result.CtrlrIDList) {
-		log.Printf("Limiting result len(%d) to [%d:%d]", len(result.CtrlrIDList), offset, size)
-		result.CtrlrIDList = result.CtrlrIDList[:in.PageSize]
+	token, hasMoreElements := "", false
+	log.Printf("Limiting result len(%d) to [%d:%d]", len(result.CtrlrIDList), offset, size)
+	result.CtrlrIDList, hasMoreElements = server.LimitPagination(result.CtrlrIDList, offset, size)
+	if hasMoreElements {
+		token = uuid.New().String()
+		s.Pagination[token] = offset + size
 	}
 	Blobarray := make([]*pb.NVMeController, len(result.CtrlrIDList))
 	for i := range result.CtrlrIDList {
@@ -640,9 +647,12 @@ func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespaces
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	if in.PageSize > 0 && int(in.PageSize) < len(result.NsList) {
-		log.Printf("Limiting result len(%d) to [%d:%d]", len(result.NsList), offset, size)
-		result.NsList = result.NsList[:in.PageSize]
+	token, hasMoreElements := "", false
+	log.Printf("Limiting result len(%d) to [%d:%d]", len(result.NsList), offset, size)
+	result.NsList, hasMoreElements = server.LimitPagination(result.NsList, offset, size)
+	if hasMoreElements {
+		token = uuid.New().String()
+		s.Pagination[token] = offset + size
 	}
 	Blobarray := make([]*pb.NVMeNamespace, len(result.NsList))
 	for i := range result.NsList {

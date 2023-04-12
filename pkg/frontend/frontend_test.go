@@ -320,6 +320,7 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 		errMsg  string
 		start   bool
 		size    int32
+		token   string
 	}{
 		"valid request with invalid SPDK response": {
 			nil,
@@ -328,6 +329,7 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			fmt.Sprintf("Could not list %v", "subsystems"),
 			true,
 			0,
+			"",
 		},
 		"valid request with empty SPDK response": {
 			nil,
@@ -336,6 +338,7 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			fmt.Sprintf("mrvl_nvm_get_subsys_list: %v", "EOF"),
 			true,
 			0,
+			"",
 		},
 		"valid request with ID mismatch SPDK response": {
 			nil,
@@ -344,6 +347,7 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			fmt.Sprintf("mrvl_nvm_get_subsys_list: %v", "json response ID mismatch"),
 			true,
 			0,
+			"",
 		},
 		"valid request with error code from SPDK response": {
 			nil,
@@ -352,6 +356,7 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			fmt.Sprintf("mrvl_nvm_get_subsys_list: %v", "json response error: myopierr"),
 			true,
 			0,
+			"",
 		},
 		"pagination negative": {
 			nil,
@@ -360,6 +365,16 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			"negative PageSize is not allowed",
 			false,
 			-10,
+			"",
+		},
+		"pagination error": {
+			nil,
+			[]string{},
+			codes.NotFound,
+			fmt.Sprintf("unable to find pagination token %s", "unknown-pagination-token"),
+			false,
+			0,
+			"unknown-pagination-token",
 		},
 		"pagination": {
 			[]*pb.NVMeSubsystem{
@@ -370,6 +385,7 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			"",
 			true,
 			1,
+			"",
 		},
 		"pagination overflow": {
 			[]*pb.NVMeSubsystem{
@@ -382,6 +398,18 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			"",
 			true,
 			1000,
+			"",
+		},
+		"pagination offset": {
+			[]*pb.NVMeSubsystem{
+				{Spec: &pb.NVMeSubsystemSpec{Nqn: "nqn.2022-09.io.spdk:opi2"}},
+			},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0, "subsys_list": [{"subnqn": "nqn.2022-09.io.spdk:opi1"},{"subnqn": "nqn.2022-09.io.spdk:opi2"},{"subnqn": "nqn.2022-09.io.spdk:opi3"}]}}`},
+			codes.OK,
+			"",
+			true,
+			1,
+			"existing-pagination-token",
 		},
 		"valid request with valid SPDK response": {
 			[]*pb.NVMeSubsystem{
@@ -394,6 +422,7 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			"",
 			true,
 			0,
+			"",
 		},
 	}
 
@@ -406,8 +435,9 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			testEnv.opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 			testEnv.opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
 			testEnv.opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
 
-			request := &pb.ListNVMeSubsystemsRequest{PageSize: tt.size}
+			request := &pb.ListNVMeSubsystemsRequest{PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListNVMeSubsystems(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.NvMeSubsystems, tt.out) {
@@ -915,6 +945,7 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 		errMsg  string
 		start   bool
 		size    int32
+		token   string
 	}{
 		"valid request with invalid SPDK response": {
 			"subsystem-test",
@@ -924,6 +955,7 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 			fmt.Sprintf("Could not list CTRLs: %v", "subsystem-test"),
 			true,
 			0,
+			"",
 		},
 		"valid request with empty SPDK response": {
 			"subsystem-test",
@@ -933,6 +965,7 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 			fmt.Sprintf("mrvl_nvm_subsys_get_ctrlr_list: %v", "EOF"),
 			true,
 			0,
+			"",
 		},
 		"valid request with ID mismatch SPDK response": {
 			"subsystem-test",
@@ -942,6 +975,7 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 			fmt.Sprintf("mrvl_nvm_subsys_get_ctrlr_list: %v", "json response ID mismatch"),
 			true,
 			0,
+			"",
 		},
 		"valid request with error code from SPDK response": {
 			"subsystem-test",
@@ -951,6 +985,7 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 			fmt.Sprintf("mrvl_nvm_subsys_get_ctrlr_list: %v", "json response error: myopierr"),
 			true,
 			0,
+			"",
 		},
 		"pagination negative": {
 			"subsystem-test",
@@ -960,6 +995,17 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 			"negative PageSize is not allowed",
 			false,
 			-10,
+			"",
+		},
+		"pagination error": {
+			"subsystem-test",
+			nil,
+			[]string{},
+			codes.NotFound,
+			fmt.Sprintf("unable to find pagination token %s", "unknown-pagination-token"),
+			false,
+			0,
+			"unknown-pagination-token",
 		},
 		"pagination": {
 			"subsystem-test",
@@ -975,6 +1021,7 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 			"",
 			true,
 			1,
+			"",
 		},
 		"pagination overflow": {
 			"subsystem-test",
@@ -1000,6 +1047,7 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 			"",
 			true,
 			1000,
+			"",
 		},
 		"valid request with valid SPDK response": {
 			"subsystem-test",
@@ -1025,6 +1073,7 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 			"",
 			true,
 			0,
+			"",
 		},
 		"valid request with unknown key": {
 			"unknown-subsystem-id",
@@ -1034,6 +1083,7 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 			fmt.Sprintf("unable to find key %v", "unknown-subsystem-id"),
 			false,
 			0,
+			"",
 		},
 	}
 
@@ -1046,8 +1096,9 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 			testEnv.opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 			testEnv.opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
 			testEnv.opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
 
-			request := &pb.ListNVMeControllersRequest{Parent: tt.in, PageSize: tt.size}
+			request := &pb.ListNVMeControllersRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListNVMeControllers(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.NvMeControllers, tt.out) {
@@ -1491,6 +1542,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 		errMsg  string
 		start   bool
 		size    int32
+		token   string
 	}{
 		"valid request with invalid SPDK response": {
 			"subsystem-test",
@@ -1500,6 +1552,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			fmt.Sprintf("Could not list NS: %v", "subsystem-test"),
 			true,
 			0,
+			"",
 		},
 		"valid request with invalid marshal SPDK response": {
 			"subsystem-test",
@@ -1509,6 +1562,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			fmt.Sprintf("mrvl_nvm_subsys_get_ns_list: %v", "json: cannot unmarshal array into Go value of type models.MrvlNvmSubsysGetNsListResult"),
 			true,
 			0,
+			"",
 		},
 		"valid request with empty SPDK response": {
 			"subsystem-test",
@@ -1518,6 +1572,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			fmt.Sprintf("mrvl_nvm_subsys_get_ns_list: %v", "EOF"),
 			true,
 			0,
+			"",
 		},
 		"valid request with ID mismatch SPDK response": {
 			"subsystem-test",
@@ -1527,6 +1582,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			fmt.Sprintf("mrvl_nvm_subsys_get_ns_list: %v", "json response ID mismatch"),
 			true,
 			0,
+			"",
 		},
 		"valid request with error code from SPDK response": {
 			"subsystem-test",
@@ -1536,6 +1592,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			fmt.Sprintf("mrvl_nvm_subsys_get_ns_list: %v", "json response error: myopierr"),
 			true,
 			0,
+			"",
 		},
 		"pagination negative": {
 			"subsystem-test",
@@ -1545,6 +1602,17 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			"negative PageSize is not allowed",
 			false,
 			-10,
+			"",
+		},
+		"pagination error": {
+			"subsystem-test",
+			nil,
+			[]string{},
+			codes.NotFound,
+			fmt.Sprintf("unable to find pagination token %s", "unknown-pagination-token"),
+			false,
+			0,
+			"unknown-pagination-token",
 		},
 		"pagination": {
 			"subsystem-test",
@@ -1560,6 +1628,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			"",
 			true,
 			1,
+			"",
 		},
 		"pagination overflow": {
 			"subsystem-test",
@@ -1585,6 +1654,23 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			"",
 			true,
 			1000,
+			"",
+		},
+		"pagination offset": {
+			"subsystem-test",
+			[]*pb.NVMeNamespace{
+				{
+					Spec: &pb.NVMeNamespaceSpec{
+						HostNsid: 12,
+					},
+				},
+			},
+			[]string{`{"jsonrpc":"2.0","id":%d,"result":{"status":0,"ns_list":[{"ns_instance_id":11,"bdev":"bdev01","ctrlr_id_list":[{"ctrlr_id":1}]},{"ns_instance_id":12,"bdev":"bdev02","ctrlr_id_list":[]},{"ns_instance_id":13,"bdev":"bdev03","ctrlr_id_list":[]}]}}`},
+			codes.OK,
+			"",
+			true,
+			1,
+			"existing-pagination-token",
 		},
 		"valid request with valid SPDK response": {
 			"subsystem-test",
@@ -1610,6 +1696,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			"",
 			true,
 			0,
+			"",
 		},
 		"valid request with unknown key": {
 			"unknown-namespace-id",
@@ -1619,6 +1706,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			fmt.Sprintf("unable to find key %v", "unknown-namespace-id"),
 			false,
 			0,
+			"",
 		},
 	}
 
@@ -1631,8 +1719,9 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			testEnv.opiSpdkServer.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 			testEnv.opiSpdkServer.Controllers[testController.Spec.Id.Value] = &testController
 			testEnv.opiSpdkServer.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
 
-			request := &pb.ListNVMeNamespacesRequest{Parent: tt.in, PageSize: tt.size}
+			request := &pb.ListNVMeNamespacesRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListNVMeNamespaces(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.NvMeNamespaces, tt.out) {
