@@ -30,8 +30,8 @@ type Server struct {
 	Subsystems  map[string]*pb.NVMeSubsystem
 	Controllers map[string]*pb.NVMeController
 	Namespaces  map[string]*pb.NVMeNamespace
-
-	rpc server.JSONRPC
+	Pagination  map[string]int
+	rpc         server.JSONRPC
 }
 
 // NewServer creates initialized instance of NVMe server
@@ -40,8 +40,8 @@ func NewServer(jsonRPC server.JSONRPC) *Server {
 		Subsystems:  make(map[string]*pb.NVMeSubsystem),
 		Controllers: make(map[string]*pb.NVMeController),
 		Namespaces:  make(map[string]*pb.NVMeNamespace),
-
-		rpc: jsonRPC,
+		Pagination:  make(map[string]int),
+		rpc:         jsonRPC,
 	}
 }
 
@@ -135,10 +135,10 @@ func (s *Server) UpdateNVMeSubsystem(_ context.Context, in *pb.UpdateNVMeSubsyst
 // ListNVMeSubsystems lists NVMe Subsystems
 func (s *Server) ListNVMeSubsystems(_ context.Context, in *pb.ListNVMeSubsystemsRequest) (*pb.ListNVMeSubsystemsResponse, error) {
 	log.Printf("ListNVMeSubsystems: Received from client: %v", in)
-	if in.PageSize < 0 {
-		err := status.Error(codes.InvalidArgument, "negative PageSize is not allowed")
-		log.Printf("error: %v", err)
-		return nil, err
+	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	if perr != nil {
+		log.Printf("error: %v", perr)
+		return nil, perr
 	}
 	var result models.MrvlNvmGetSubsysListResult
 	err := s.rpc.Call("mrvl_nvm_get_subsys_list", nil, &result)
@@ -153,7 +153,7 @@ func (s *Server) ListNVMeSubsystems(_ context.Context, in *pb.ListNVMeSubsystems
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	if in.PageSize > 0 && int(in.PageSize) < len(result.SubsysList) {
-		log.Printf("Limiting result to: %d", in.PageSize)
+		log.Printf("Limiting result len(%d) to [%d:%d]", len(result.SubsysList), offset, size)
 		result.SubsysList = result.SubsysList[:in.PageSize]
 	}
 	Blobarray := make([]*pb.NVMeSubsystem, len(result.SubsysList))
@@ -359,10 +359,10 @@ func (s *Server) UpdateNVMeController(_ context.Context, in *pb.UpdateNVMeContro
 // ListNVMeControllers lists NVMe controllers
 func (s *Server) ListNVMeControllers(_ context.Context, in *pb.ListNVMeControllersRequest) (*pb.ListNVMeControllersResponse, error) {
 	log.Printf("ListNVMeControllers: Received from client: %v", in)
-	if in.PageSize < 0 {
-		err := status.Error(codes.InvalidArgument, "negative PageSize is not allowed")
-		log.Printf("error: %v", err)
-		return nil, err
+	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	if perr != nil {
+		log.Printf("error: %v", perr)
+		return nil, perr
 	}
 	subsys, ok := s.Subsystems[in.Parent]
 	if !ok {
@@ -386,7 +386,7 @@ func (s *Server) ListNVMeControllers(_ context.Context, in *pb.ListNVMeControlle
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	if in.PageSize > 0 && int(in.PageSize) < len(result.CtrlrIDList) {
-		log.Printf("Limiting result to: %d", in.PageSize)
+		log.Printf("Limiting result len(%d) to [%d:%d]", len(result.CtrlrIDList), offset, size)
 		result.CtrlrIDList = result.CtrlrIDList[:in.PageSize]
 	}
 	Blobarray := make([]*pb.NVMeController, len(result.CtrlrIDList))
@@ -614,10 +614,10 @@ func (s *Server) UpdateNVMeNamespace(_ context.Context, in *pb.UpdateNVMeNamespa
 // ListNVMeNamespaces lists NVMe namespaces
 func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespacesRequest) (*pb.ListNVMeNamespacesResponse, error) {
 	log.Printf("ListNVMeNamespaces: Received from client: %v", in)
-	if in.PageSize < 0 {
-		err := status.Error(codes.InvalidArgument, "negative PageSize is not allowed")
-		log.Printf("error: %v", err)
-		return nil, err
+	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	if perr != nil {
+		log.Printf("error: %v", perr)
+		return nil, perr
 	}
 	subsys, ok := s.Subsystems[in.Parent]
 	if !ok {
@@ -641,7 +641,7 @@ func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespaces
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	if in.PageSize > 0 && int(in.PageSize) < len(result.NsList) {
-		log.Printf("Limiting result to: %d", in.PageSize)
+		log.Printf("Limiting result len(%d) to [%d:%d]", len(result.NsList), offset, size)
 		result.NsList = result.NsList[:in.PageSize]
 	}
 	Blobarray := make([]*pb.NVMeNamespace, len(result.NsList))
