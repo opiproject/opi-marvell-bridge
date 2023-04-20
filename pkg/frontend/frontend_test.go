@@ -24,6 +24,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
@@ -40,7 +41,7 @@ type testEnv struct {
 	testSocket    string
 	ctx           context.Context
 	conn          *grpc.ClientConn
-	jsonRPC       server.JSONRPC
+	jsonRPC       spdk.JSONRPC
 }
 
 func (e *testEnv) Close() {

@@ -12,10 +12,10 @@ import (
 	"log"
 	"strconv"
 
+	"github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-marvell-bridge/pkg/models"
-	spdk "github.com/opiproject/opi-spdk-bridge/pkg/models"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"github.com/google/uuid"
@@ -32,11 +32,11 @@ type Server struct {
 	Controllers map[string]*pb.NVMeController
 	Namespaces  map[string]*pb.NVMeNamespace
 	Pagination  map[string]int
-	rpc         server.JSONRPC
+	rpc         spdk.JSONRPC
 }
 
 // NewServer creates initialized instance of NVMe server
-func NewServer(jsonRPC server.JSONRPC) *Server {
+func NewServer(jsonRPC spdk.JSONRPC) *Server {
 	return &Server{
 		Subsystems:  make(map[string]*pb.NVMeSubsystem),
 		Controllers: make(map[string]*pb.NVMeController),
