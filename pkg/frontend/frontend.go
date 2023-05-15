@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 	"strconv"
 
 	"github.com/opiproject/gospdk/spdk"
@@ -44,6 +45,24 @@ func NewServer(jsonRPC spdk.JSONRPC) *Server {
 		Pagination:  make(map[string]int),
 		rpc:         jsonRPC,
 	}
+}
+
+func sortNVMeSubsystems(subsystems []*pb.NVMeSubsystem) {
+	sort.Slice(subsystems, func(i int, j int) bool {
+		return subsystems[i].Spec.Nqn < subsystems[j].Spec.Nqn
+	})
+}
+
+func sortNVMeControllers(controllers []*pb.NVMeController) {
+	sort.Slice(controllers, func(i int, j int) bool {
+		return controllers[i].Spec.Id.Value < controllers[j].Spec.Id.Value
+	})
+}
+
+func sortNVMeNamespaces(namespaces []*pb.NVMeNamespace) {
+	sort.Slice(namespaces, func(i int, j int) bool {
+		return namespaces[i].Spec.HostNsid < namespaces[j].Spec.HostNsid
+	})
 }
 
 // CreateNVMeSubsystem creates an NVMe Subsystem
@@ -169,6 +188,7 @@ func (s *Server) ListNVMeSubsystems(_ context.Context, in *pb.ListNVMeSubsystems
 		r := &result.SubsysList[i]
 		Blobarray[i] = &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: r.Subnqn}}
 	}
+	sortNVMeSubsystems(Blobarray)
 	return &pb.ListNVMeSubsystemsResponse{NvMeSubsystems: Blobarray}, nil
 }
 
@@ -409,6 +429,7 @@ func (s *Server) ListNVMeControllers(_ context.Context, in *pb.ListNVMeControlle
 		r := &result.CtrlrIDList[i]
 		Blobarray[i] = &pb.NVMeController{Spec: &pb.NVMeControllerSpec{NvmeControllerId: int32(r.CtrlrID)}}
 	}
+	sortNVMeControllers(Blobarray)
 	return &pb.ListNVMeControllersResponse{NvMeControllers: Blobarray}, nil
 }
 
@@ -671,6 +692,7 @@ func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespaces
 		r := &result.NsList[i]
 		Blobarray[i] = &pb.NVMeNamespace{Spec: &pb.NVMeNamespaceSpec{HostNsid: int32(r.NsInstanceID)}}
 	}
+	sortNVMeNamespaces(Blobarray)
 	return &pb.ListNVMeNamespacesResponse{NvMeNamespaces: Blobarray}, nil
 }
 
