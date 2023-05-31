@@ -69,14 +69,14 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 	// see https://google.aip.dev/133#user-specified-ids
 	name := uuid.New().String()
 	if in.NvmeSubsystemId != "" {
-		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeSubsystemId, in.NvmeSubsystem.Spec.Name)
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeSubsystemId, in.NvmeSubsystem.Name)
 		name = in.NvmeSubsystemId
 	}
-	in.NvmeSubsystem.Spec.Name = name
+	in.NvmeSubsystem.Name = name
 	// idempotent API when called with same key, should return same object
-	subsys, ok := s.Subsystems[in.NvmeSubsystem.Spec.Name]
+	subsys, ok := s.Subsystems[in.NvmeSubsystem.Name]
 	if ok {
-		log.Printf("Already existing NvmeSubsystem with id %v", in.NvmeSubsystem.Spec.Name)
+		log.Printf("Already existing NvmeSubsystem with id %v", in.NvmeSubsystem.Name)
 		return subsys, nil
 	}
 	// not found, so create a new one
@@ -111,7 +111,7 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 	log.Printf("Received from SPDK: %v", ver)
 	response := server.ProtoClone(in.NvmeSubsystem)
 	response.Status = &pb.NvmeSubsystemStatus{FirmwareRevision: ver.Version}
-	s.Subsystems[in.NvmeSubsystem.Spec.Name] = response
+	s.Subsystems[in.NvmeSubsystem.Name] = response
 	return response, nil
 }
 
@@ -142,7 +142,7 @@ func (s *Server) DeleteNvmeSubsystem(_ context.Context, in *pb.DeleteNvmeSubsyst
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	delete(s.Subsystems, subsys.Spec.Name)
+	delete(s.Subsystems, subsys.Name)
 	return &emptypb.Empty{}, nil
 }
 
@@ -258,14 +258,14 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 	// see https://google.aip.dev/133#user-specified-ids
 	name := uuid.New().String()
 	if in.NvmeControllerId != "" {
-		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeControllerId, in.NvmeController.Spec.Name)
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeControllerId, in.NvmeController.Name)
 		name = in.NvmeControllerId
 	}
-	in.NvmeController.Spec.Name = name
+	in.NvmeController.Name = name
 	// idempotent API when called with same key, should return same object
-	controller, ok := s.Controllers[in.NvmeController.Spec.Name]
+	controller, ok := s.Controllers[in.NvmeController.Name]
 	if ok {
-		log.Printf("Already existing NvmeController with id %v", in.NvmeController.Spec.Name)
+		log.Printf("Already existing NvmeController with id %v", in.NvmeController.Name)
 		return controller, nil
 	}
 	// not found, so create a new one
@@ -294,13 +294,13 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		msg := fmt.Sprintf("Could not create CTRL: %s", in.NvmeController.Spec.Name)
+		msg := fmt.Sprintf("Could not create CTRL: %s", in.NvmeController.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	s.Controllers[in.NvmeController.Spec.Name] = in.NvmeController
-	s.Controllers[in.NvmeController.Spec.Name].Spec.NvmeControllerId = int32(result.CtrlrID)
-	s.Controllers[in.NvmeController.Spec.Name].Status = &pb.NvmeControllerStatus{Active: true}
+	s.Controllers[in.NvmeController.Name] = in.NvmeController
+	s.Controllers[in.NvmeController.Name].Spec.NvmeControllerId = int32(result.CtrlrID)
+	s.Controllers[in.NvmeController.Name].Status = &pb.NvmeControllerStatus{Active: true}
 	response := server.ProtoClone(in.NvmeController)
 	return response, nil
 }
@@ -335,11 +335,11 @@ func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeContro
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		msg := fmt.Sprintf("Could not delete CTRL: %s", controller.Spec.Name)
+		msg := fmt.Sprintf("Could not delete CTRL: %s", controller.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	delete(s.Controllers, controller.Spec.Name)
+	delete(s.Controllers, controller.Name)
 	return &emptypb.Empty{}, nil
 }
 
@@ -370,13 +370,13 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		msg := fmt.Sprintf("Could not update CTRL: %s", in.NvmeController.Spec.Name)
+		msg := fmt.Sprintf("Could not update CTRL: %s", in.NvmeController.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	s.Controllers[in.NvmeController.Spec.Name] = in.NvmeController
-	s.Controllers[in.NvmeController.Spec.Name].Spec.NvmeControllerId = int32(result.CtrlrID)
-	s.Controllers[in.NvmeController.Spec.Name].Status = &pb.NvmeControllerStatus{Active: true}
+	s.Controllers[in.NvmeController.Name] = in.NvmeController
+	s.Controllers[in.NvmeController.Name].Spec.NvmeControllerId = int32(result.CtrlrID)
+	s.Controllers[in.NvmeController.Name].Status = &pb.NvmeControllerStatus{Active: true}
 	response := server.ProtoClone(in.NvmeController)
 	return response, nil
 }
@@ -457,7 +457,7 @@ func (s *Server) GetNvmeController(_ context.Context, in *pb.GetNvmeControllerRe
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 
-	return &pb.NvmeController{Spec: &pb.NvmeControllerSpec{Name: in.Name, NvmeControllerId: controller.Spec.NvmeControllerId}, Status: &pb.NvmeControllerStatus{Active: true}}, nil
+	return &pb.NvmeController{Name: in.Name, Spec: &pb.NvmeControllerSpec{NvmeControllerId: controller.Spec.NvmeControllerId}, Status: &pb.NvmeControllerStatus{Active: true}}, nil
 }
 
 // NvmeControllerStats gets an Nvme controller stats
@@ -510,14 +510,14 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 	// see https://google.aip.dev/133#user-specified-ids
 	name := uuid.New().String()
 	if in.NvmeNamespaceId != "" {
-		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeNamespaceId, in.NvmeNamespace.Spec.Name)
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeNamespaceId, in.NvmeNamespace.Name)
 		name = in.NvmeNamespaceId
 	}
-	in.NvmeNamespace.Spec.Name = name
+	in.NvmeNamespace.Name = name
 	// idempotent API when called with same key, should return same object
-	namespace, ok := s.Namespaces[in.NvmeNamespace.Spec.Name]
+	namespace, ok := s.Namespaces[in.NvmeNamespace.Name]
 	if ok {
-		log.Printf("Already existing NvmeNamespace with id %v", in.NvmeNamespace.Spec.Name)
+		log.Printf("Already existing NvmeNamespace with id %v", in.NvmeNamespace.Name)
 		return namespace, nil
 	}
 	// not found, so create a new one
@@ -544,12 +544,12 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		msg := fmt.Sprintf("Could not create NS: %s", in.NvmeNamespace.Spec.Name)
+		msg := fmt.Sprintf("Could not create NS: %s", in.NvmeNamespace.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 
-	s.Namespaces[in.NvmeNamespace.Spec.Name] = in.NvmeNamespace
+	s.Namespaces[in.NvmeNamespace.Name] = in.NvmeNamespace
 
 	// Now, attach this new NS to ALL controllers
 	for _, c := range s.Controllers {
@@ -568,7 +568,7 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 			return nil, err
 		}
 		if result.Status != 0 {
-			msg := fmt.Sprintf("Could not attach NS: %s", in.NvmeNamespace.Spec.Name)
+			msg := fmt.Sprintf("Could not attach NS: %s", in.NvmeNamespace.Name)
 			log.Print(msg)
 			return nil, status.Errorf(codes.InvalidArgument, msg)
 		}
@@ -635,7 +635,7 @@ func (s *Server) DeleteNvmeNamespace(_ context.Context, in *pb.DeleteNvmeNamespa
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	delete(s.Namespaces, namespace.Spec.Name)
+	delete(s.Namespaces, namespace.Name)
 	return &emptypb.Empty{}, nil
 }
 
@@ -723,7 +723,7 @@ func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequ
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.NvmeNamespace{Spec: &pb.NvmeNamespaceSpec{Name: in.Name, Nguid: result.Nguid}, Status: &pb.NvmeNamespaceStatus{PciState: 2, PciOperState: 1}}, nil
+	return &pb.NvmeNamespace{Name: in.Name, Spec: &pb.NvmeNamespaceSpec{Nguid: result.Nguid}, Status: &pb.NvmeNamespaceStatus{PciState: 2, PciOperState: 1}}, nil
 }
 
 // NvmeNamespaceStats gets an Nvme namespace stats
