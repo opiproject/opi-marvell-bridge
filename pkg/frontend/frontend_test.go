@@ -283,11 +283,26 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 		start   bool
 	}{
 		"unimplemented method": {
-			&pb.NvmeSubsystem{},
+			&pb.NvmeSubsystem{
+				Name: testSubsystemID,
+			},
 			nil,
 			[]string{""},
 			codes.Unimplemented,
 			fmt.Sprintf("%v method is not implemented", "UpdateNvmeSubsystem"),
+			false,
+		},
+		"valid request with unknown key": {
+			&pb.NvmeSubsystem{
+				Name: "unknown-id",
+				Spec: &pb.NvmeSubsystemSpec{
+					Nqn: "nqn.2022-09.io.spdk:opi3",
+				},
+			},
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", "unknown-id"),
 			false,
 		},
 	}
@@ -915,6 +930,16 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 			"",
 			true,
 		},
+		"valid request with unknown key": {
+			&pb.NvmeController{
+				Name: "unknown-id",
+			},
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			false,
+		},
 	}
 
 	// run tests
@@ -1526,11 +1551,23 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 		start   bool
 	}{
 		"unimplemented method": {
-			&pb.NvmeNamespace{},
+			&pb.NvmeNamespace{
+				Name: testNamespaceID,
+			},
 			nil,
 			[]string{""},
 			codes.Unimplemented,
 			fmt.Sprintf("%v method is not implemented", "UpdateNvmeNamespace"),
+			false,
+		},
+		"valid request with unknown key": {
+			&pb.NvmeNamespace{
+				Name: "unknown-id",
+			},
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", "unknown-id"),
 			false,
 		},
 	}
