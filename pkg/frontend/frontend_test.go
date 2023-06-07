@@ -93,16 +93,18 @@ func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, erro
 }
 
 var (
-	testSubsystemID = "subsystem-test"
-	testSubsystem   = pb.NvmeSubsystem{
+	testSubsystemID   = "subsystem-test"
+	testSubsystemName = server.ResourceIDToVolumeName(testSubsystemID)
+	testSubsystem     = pb.NvmeSubsystem{
 		Spec: &pb.NvmeSubsystemSpec{
 			Nqn: "nqn.2022-09.io.spdk:opi3",
 		},
 	}
-	testControllerID = "controller-test"
-	testController   = pb.NvmeController{
+	testControllerID   = "controller-test"
+	testControllerName = server.ResourceIDToVolumeName(testControllerID)
+	testController     = pb.NvmeController{
 		Spec: &pb.NvmeControllerSpec{
-			SubsystemId:      &pc.ObjectKey{Value: testSubsystemID},
+			SubsystemId:      &pc.ObjectKey{Value: testSubsystemName},
 			PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
 			NvmeControllerId: 17,
 		},
@@ -110,11 +112,12 @@ var (
 			Active: true,
 		},
 	}
-	testNamespaceID = "namespace-test"
-	testNamespace   = pb.NvmeNamespace{
+	testNamespaceID   = "namespace-test"
+	testNamespaceName = server.ResourceIDToVolumeName(testNamespaceID)
+	testNamespace     = pb.NvmeNamespace{
 		Spec: &pb.NvmeNamespaceSpec{
 			HostNsid:    22,
-			SubsystemId: &pc.ObjectKey{Value: testSubsystemID},
+			SubsystemId: &pc.ObjectKey{Value: testSubsystemName},
 		},
 		Status: &pb.NvmeNamespaceStatus{
 			PciState:     2,
@@ -140,7 +143,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 	}{
 		"valid request with invalid SPDK response": {
 			&pb.NvmeSubsystem{
-				Name: testSubsystemID,
+				Name: testSubsystemName,
 				Spec: spec,
 			},
 			nil,
@@ -152,7 +155,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 		},
 		"valid request with empty SPDK response": {
 			&pb.NvmeSubsystem{
-				Name: testSubsystemID,
+				Name: testSubsystemName,
 				Spec: spec,
 			},
 			nil,
@@ -164,7 +167,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 		},
 		"valid request with ID mismatch SPDK response": {
 			&pb.NvmeSubsystem{
-				Name: testSubsystemID,
+				Name: testSubsystemName,
 				Spec: spec,
 			},
 			nil,
@@ -176,7 +179,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 		},
 		"valid request with error code from SPDK response": {
 			&pb.NvmeSubsystem{
-				Name: testSubsystemID,
+				Name: testSubsystemName,
 				Spec: spec,
 			},
 			nil,
@@ -188,7 +191,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 		},
 		"valid request with error code from SPDK version response": {
 			&pb.NvmeSubsystem{
-				Name: testSubsystemID,
+				Name: testSubsystemName,
 				Spec: spec,
 			},
 			nil,
@@ -200,11 +203,11 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 		},
 		"valid request with valid SPDK response": {
 			&pb.NvmeSubsystem{
-				Name: testSubsystemID,
+				Name: testSubsystemName,
 				Spec: spec,
 			},
 			&pb.NvmeSubsystem{
-				Name: testSubsystemID,
+				Name: testSubsystemName,
 				Spec: spec,
 				Status: &pb.NvmeSubsystemStatus{
 					FirmwareRevision: "SPDK v20.10",
@@ -218,7 +221,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 		},
 		"already exists": {
 			&pb.NvmeSubsystem{
-				Name: testSubsystemID,
+				Name: testSubsystemName,
 				Spec: spec,
 			},
 			&testSubsystem,
@@ -236,14 +239,14 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Controllers[testControllerID] = &testController
-			testEnv.opiSpdkServer.Namespaces[testNamespaceID] = &testNamespace
+			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
 			if tt.exist {
-				testEnv.opiSpdkServer.Subsystems[testSubsystemID] = &testSubsystem
+				testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
 				// testEnv.opiSpdkServer.Subsystems[testSubsystemID].Spec.Id = &pc.ObjectKey{Value: testSubsystemID}
 			}
 			if tt.out != nil {
-				tt.out.Name = testSubsystemID
+				tt.out.Name = testSubsystemName
 			}
 
 			request := &pb.CreateNvmeSubsystemRequest{NvmeSubsystem: tt.in, NvmeSubsystemId: testSubsystemID}
@@ -262,7 +265,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
-						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+						t.Error("error code: expected", tt.errCode, "received", er.Code())
 					}
 					if er.Message() != tt.errMsg {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
@@ -284,7 +287,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 	}{
 		"unimplemented method": {
 			&pb.NvmeSubsystem{
-				Name: testSubsystemID,
+				Name: testSubsystemName,
 			},
 			nil,
 			[]string{""},
@@ -294,7 +297,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 		},
 		"valid request with unknown key": {
 			&pb.NvmeSubsystem{
-				Name: "unknown-id",
+				Name: server.ResourceIDToVolumeName("unknown-id"),
 				Spec: &pb.NvmeSubsystemSpec{
 					Nqn: "nqn.2022-09.io.spdk:opi3",
 				},
@@ -302,7 +305,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
 			false,
 		},
 	}
@@ -313,20 +316,20 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID] = &testSubsystem
-			testEnv.opiSpdkServer.Controllers[testControllerID] = &testController
-			testEnv.opiSpdkServer.Namespaces[testNamespaceID] = &testNamespace
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
 
 			request := &pb.UpdateNvmeSubsystemRequest{NvmeSubsystem: tt.in}
 			response, err := testEnv.client.UpdateNvmeSubsystem(testEnv.ctx, request)
 			if response != nil {
-				t.Error("response: expected", codes.Unimplemented, "received", response)
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
-						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+						t.Error("error code: expected", tt.errCode, "received", er.Code())
 					}
 					if er.Message() != tt.errMsg {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
@@ -457,9 +460,9 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID] = &testSubsystem
-			testEnv.opiSpdkServer.Controllers[testControllerID] = &testController
-			testEnv.opiSpdkServer.Namespaces[testNamespaceID] = &testNamespace
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
 			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
 
 			request := &pb.ListNvmeSubsystemsRequest{PageSize: tt.size, PageToken: tt.token}
@@ -473,7 +476,7 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
-						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+						t.Error("error code: expected", tt.errCode, "received", er.Code())
 					}
 					if er.Message() != tt.errMsg {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
@@ -494,7 +497,7 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 		start   bool
 	}{
 		"valid request with invalid SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.InvalidArgument,
@@ -502,7 +505,7 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 			true,
 		},
 		"valid request with empty SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -510,7 +513,7 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 			true,
 		},
 		"valid request with ID mismatch SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.Unknown,
@@ -518,7 +521,7 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 			true,
 		},
 		"valid request with error code from SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":{"status": 1}}`},
 			codes.Unknown,
@@ -526,7 +529,7 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 			true,
 		},
 		"valid request with valid SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			&pb.NvmeSubsystem{
 				Spec:   &pb.NvmeSubsystemSpec{Nqn: "nqn.2022-09.io.spdk:opi3"},
 				Status: &pb.NvmeSubsystemStatus{FirmwareRevision: "TBD"},
@@ -537,11 +540,11 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 			true,
 		},
 		"valid request with unknown key": {
-			"unknown-subsystem-id",
+			server.ResourceIDToVolumeName("unknown-subsystem-id"),
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "unknown-subsystem-id"),
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-subsystem-id")),
 			false,
 		},
 	}
@@ -552,9 +555,9 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID] = &testSubsystem
-			testEnv.opiSpdkServer.Controllers[testControllerID] = &testController
-			testEnv.opiSpdkServer.Namespaces[testNamespaceID] = &testNamespace
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
 
 			request := &pb.GetNvmeSubsystemRequest{Name: tt.in}
 			response, err := testEnv.client.GetNvmeSubsystem(testEnv.ctx, request)
@@ -570,7 +573,7 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
-						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+						t.Error("error code: expected", tt.errCode, "received", er.Code())
 					}
 					if er.Message() != tt.errMsg {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
@@ -591,7 +594,7 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 		start   bool
 	}{
 		"valid request with invalid SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.InvalidArgument,
@@ -599,7 +602,7 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 			true,
 		},
 		"valid request with invalid marshal SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
@@ -607,7 +610,7 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 			true,
 		},
 		"valid request with empty SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -615,7 +618,7 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 			true,
 		},
 		"valid request with ID mismatch SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.Unknown,
@@ -623,7 +626,7 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 			true,
 		},
 		"valid request with error code from SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
@@ -631,7 +634,7 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 			true,
 		},
 		"valid request with valid SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			&pb.VolumeStats{
 				ReadOpsCount:  -1,
 				WriteOpsCount: -1,
@@ -657,9 +660,9 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID] = &testSubsystem
-			testEnv.opiSpdkServer.Controllers[testControllerID] = &testController
-			testEnv.opiSpdkServer.Namespaces[testNamespaceID] = &testNamespace
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
 
 			request := &pb.NvmeSubsystemStatsRequest{SubsystemId: &pc.ObjectKey{Value: tt.in}}
 			response, err := testEnv.client.NvmeSubsystemStats(testEnv.ctx, request)
@@ -672,7 +675,7 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
-						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+						t.Error("error code: expected", tt.errCode, "received", er.Code())
 					}
 					if er.Message() != tt.errMsg {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
@@ -685,7 +688,7 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 
 func TestFrontEnd_CreateNvmeController(t *testing.T) {
 	spec := &pb.NvmeControllerSpec{
-		SubsystemId:      &pc.ObjectKey{Value: testSubsystemID},
+		SubsystemId:      &pc.ObjectKey{Value: testSubsystemName},
 		PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2, PortId: 3},
 		NvmeControllerId: 1,
 		MaxNsq:           5,
@@ -704,19 +707,19 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 	}{
 		"valid request with invalid SPDK response": {
 			&pb.NvmeController{
-				Name: testControllerID,
+				Name: testControllerName,
 				Spec: spec,
 			},
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1, "cntlid": -1}}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not create CTRL: %v", testControllerID),
+			fmt.Sprintf("Could not create CTRL: %v", testControllerName),
 			true,
 			false,
 		},
 		"valid request with empty SPDK response": {
 			&pb.NvmeController{
-				Name: testControllerID,
+				Name: testControllerName,
 				Spec: spec,
 			},
 			nil,
@@ -728,7 +731,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 		},
 		"valid request with ID mismatch SPDK response": {
 			&pb.NvmeController{
-				Name: testControllerID,
+				Name: testControllerName,
 				Spec: spec,
 			},
 			nil,
@@ -740,7 +743,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 		},
 		"valid request with error code from SPDK response": {
 			&pb.NvmeController{
-				Name: testControllerID,
+				Name: testControllerName,
 				Spec: spec,
 			},
 			nil,
@@ -752,9 +755,9 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 		},
 		"valid request with valid SPDK response": {
 			&pb.NvmeController{
-				Name: testControllerID,
+				Name: testControllerName,
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemId:      &pc.ObjectKey{Value: testSubsystemID},
+					SubsystemId:      &pc.ObjectKey{Value: testSubsystemName},
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2, PortId: 3},
 					NvmeControllerId: 17,
 					MaxNsq:           5,
@@ -764,9 +767,9 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 				},
 			},
 			&pb.NvmeController{
-				Name: testControllerID,
+				Name: testControllerName,
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemId: &pc.ObjectKey{Value: testSubsystemID},
+					SubsystemId: &pc.ObjectKey{Value: testSubsystemName},
 					PcieId:      &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2, PortId: 3},
 					MaxNsq:      5,
 					MaxNcq:      6,
@@ -783,7 +786,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 		},
 		"already exists": {
 			&pb.NvmeController{
-				Name: testControllerID,
+				Name: testControllerName,
 				Spec: spec,
 			},
 			&testController,
@@ -801,14 +804,14 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID] = &testSubsystem
-			testEnv.opiSpdkServer.Namespaces[testNamespaceID] = &testNamespace
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
 			if tt.exist {
-				testEnv.opiSpdkServer.Controllers[testControllerID] = &testController
+				testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
 				// testEnv.opiSpdkServer.Controllers[testControllerID].Spec.Id = &pc.ObjectKey{Value: testControllerID}
 			}
 			if tt.out != nil {
-				tt.out.Name = testControllerID
+				tt.out.Name = testControllerName
 			}
 
 			request := &pb.CreateNvmeControllerRequest{NvmeController: tt.in, NvmeControllerId: testControllerID}
@@ -827,7 +830,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
-						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+						t.Error("error code: expected", tt.errCode, "received", er.Code())
 					}
 					if er.Message() != tt.errMsg {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
@@ -840,7 +843,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 
 func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 	spec := &pb.NvmeControllerSpec{
-		SubsystemId:      &pc.ObjectKey{Value: testSubsystemID},
+		SubsystemId:      &pc.ObjectKey{Value: testSubsystemName},
 		PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2, PortId: 3},
 		NvmeControllerId: 1,
 		MaxNsq:           5,
@@ -858,18 +861,18 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 	}{
 		"valid request with invalid SPDK response": {
 			&pb.NvmeController{
-				Name: testControllerID,
+				Name: testControllerName,
 				Spec: spec,
 			},
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1, "cntlid": -1}}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not update CTRL: %v", testControllerID),
+			fmt.Sprintf("Could not update CTRL: %v", testControllerName),
 			true,
 		},
 		"valid request with empty SPDK response": {
 			&pb.NvmeController{
-				Name: testControllerID,
+				Name: testControllerName,
 				Spec: spec,
 			},
 			nil,
@@ -880,7 +883,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 		},
 		"valid request with ID mismatch SPDK response": {
 			&pb.NvmeController{
-				Name: testControllerID,
+				Name: testControllerName,
 				Spec: spec,
 			},
 			nil,
@@ -891,7 +894,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 		},
 		"valid request with error code from SPDK response": {
 			&pb.NvmeController{
-				Name: testControllerID,
+				Name: testControllerName,
 				Spec: spec,
 			},
 			nil,
@@ -902,9 +905,9 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 		},
 		"valid request with valid SPDK response": {
 			&pb.NvmeController{
-				Name: testControllerID,
+				Name: testControllerName,
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemId:      &pc.ObjectKey{Value: testSubsystemID},
+					SubsystemId:      &pc.ObjectKey{Value: testSubsystemName},
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2, PortId: 3},
 					NvmeControllerId: 17,
 					MaxNsq:           5,
@@ -914,9 +917,9 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 				},
 			},
 			&pb.NvmeController{
-				Name: testControllerID,
+				Name: testControllerName,
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemId: &pc.ObjectKey{Value: testSubsystemID},
+					SubsystemId: &pc.ObjectKey{Value: testSubsystemName},
 					PcieId:      &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2, PortId: 3},
 					MaxNsq:      5,
 					MaxNcq:      6,
@@ -932,12 +935,12 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 		},
 		"valid request with unknown key": {
 			&pb.NvmeController{
-				Name: "unknown-id",
+				Name: server.ResourceIDToVolumeName("unknown-id"),
 			},
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
 			false,
 		},
 	}
@@ -948,9 +951,9 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID] = &testSubsystem
-			testEnv.opiSpdkServer.Controllers[testControllerID] = &testController
-			testEnv.opiSpdkServer.Namespaces[testNamespaceID] = &testNamespace
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
 
 			request := &pb.UpdateNvmeControllerRequest{NvmeController: tt.in}
 			response, err := testEnv.client.UpdateNvmeController(testEnv.ctx, request)
@@ -971,7 +974,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
-						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+						t.Error("error code: expected", tt.errCode, "received", er.Code())
 					}
 					if er.Message() != tt.errMsg {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
@@ -994,17 +997,17 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 		token   string
 	}{
 		"valid request with invalid SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1, "ctrlr_id_list": []}}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not list CTRLs: %v", testSubsystemID),
+			fmt.Sprintf("Could not list CTRLs: %v", testSubsystemName),
 			true,
 			0,
 			"",
 		},
 		"valid request with empty SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -1014,7 +1017,7 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 			"",
 		},
 		"valid request with ID mismatch SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1, "ctrlr_id_list": []}}`},
 			codes.Unknown,
@@ -1024,7 +1027,7 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 			"",
 		},
 		"valid request with error code from SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":{"status": 1, "ctrlr_id_list": []}}`},
 			codes.Unknown,
@@ -1034,7 +1037,7 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 			"",
 		},
 		"pagination negative": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{},
 			codes.InvalidArgument,
@@ -1044,7 +1047,7 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 			"",
 		},
 		"pagination error": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{},
 			codes.NotFound,
@@ -1054,7 +1057,7 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 			"unknown-pagination-token",
 		},
 		"pagination": {
-			testSubsystemID,
+			testSubsystemName,
 			[]*pb.NvmeController{
 				{
 					Spec: &pb.NvmeControllerSpec{
@@ -1070,7 +1073,7 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 			"",
 		},
 		"pagination overflow": {
-			testSubsystemID,
+			testSubsystemName,
 			[]*pb.NvmeController{
 				{
 					Spec: &pb.NvmeControllerSpec{
@@ -1096,7 +1099,7 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 			"",
 		},
 		"valid request with valid SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			[]*pb.NvmeController{
 				{
 					Spec: &pb.NvmeControllerSpec{
@@ -1139,9 +1142,9 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID] = &testSubsystem
-			testEnv.opiSpdkServer.Controllers[testControllerID] = &testController
-			testEnv.opiSpdkServer.Namespaces[testNamespaceID] = &testNamespace
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
 			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
 
 			request := &pb.ListNvmeControllersRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
@@ -1155,7 +1158,7 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
-						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+						t.Error("error code: expected", tt.errCode, "received", er.Code())
 					}
 					if er.Message() != tt.errMsg {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
@@ -1176,15 +1179,15 @@ func TestFrontEnd_GetNvmeController(t *testing.T) {
 		start   bool
 	}{
 		"valid request with invalid SPDK response": {
-			testControllerID,
+			testControllerName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status":1}}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not get CTRL: %v", testControllerID),
+			fmt.Sprintf("Could not get CTRL: %v", testControllerName),
 			true,
 		},
 		"valid request with empty SPDK response": {
-			testControllerID,
+			testControllerName,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -1192,7 +1195,7 @@ func TestFrontEnd_GetNvmeController(t *testing.T) {
 			true,
 		},
 		"valid request with ID mismatch SPDK response": {
-			testControllerID,
+			testControllerName,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status":1}}`},
 			codes.Unknown,
@@ -1200,7 +1203,7 @@ func TestFrontEnd_GetNvmeController(t *testing.T) {
 			true,
 		},
 		"valid request with error code from SPDK response": {
-			testControllerID,
+			testControllerName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":{"status":1}}`},
 			codes.Unknown,
@@ -1208,9 +1211,9 @@ func TestFrontEnd_GetNvmeController(t *testing.T) {
 			true,
 		},
 		"valid request with valid SPDK response": {
-			testControllerID,
+			testControllerName,
 			&pb.NvmeController{
-				Name: testControllerID,
+				Name: testControllerName,
 				Spec: &pb.NvmeControllerSpec{
 					NvmeControllerId: 17,
 				},
@@ -1222,11 +1225,11 @@ func TestFrontEnd_GetNvmeController(t *testing.T) {
 			true,
 		},
 		"valid request with unknown key": {
-			"unknown-subsystem-id",
+			server.ResourceIDToVolumeName("unknown-subsystem-id"),
 			nil,
 			[]string{""},
 			codes.Unknown,
-			fmt.Sprintf("error finding controller %v", "unknown-subsystem-id"),
+			fmt.Sprintf("error finding controller %v", server.ResourceIDToVolumeName("unknown-subsystem-id")),
 			false,
 		},
 	}
@@ -1237,9 +1240,9 @@ func TestFrontEnd_GetNvmeController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID] = &testSubsystem
-			testEnv.opiSpdkServer.Controllers[testControllerID] = &testController
-			testEnv.opiSpdkServer.Namespaces[testNamespaceID] = &testNamespace
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
 
 			request := &pb.GetNvmeControllerRequest{Name: tt.in}
 			response, err := testEnv.client.GetNvmeController(testEnv.ctx, request)
@@ -1255,7 +1258,7 @@ func TestFrontEnd_GetNvmeController(t *testing.T) {
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
-						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+						t.Error("error code: expected", tt.errCode, "received", er.Code())
 					}
 					if er.Message() != tt.errMsg {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
@@ -1276,15 +1279,15 @@ func TestFrontEnd_NvmeControllerStats(t *testing.T) {
 		start   bool
 	}{
 		"valid request with invalid SPDK response": {
-			testControllerID,
+			testControllerName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not stats CTRL: %v", testControllerID),
+			fmt.Sprintf("Could not stats CTRL: %v", testControllerName),
 			true,
 		},
 		"valid request with invalid marshal SPDK response": {
-			testControllerID,
+			testControllerName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
@@ -1292,7 +1295,7 @@ func TestFrontEnd_NvmeControllerStats(t *testing.T) {
 			true,
 		},
 		"valid request with empty SPDK response": {
-			testControllerID,
+			testControllerName,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -1300,7 +1303,7 @@ func TestFrontEnd_NvmeControllerStats(t *testing.T) {
 			true,
 		},
 		"valid request with ID mismatch SPDK response": {
-			testControllerID,
+			testControllerName,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.Unknown,
@@ -1308,7 +1311,7 @@ func TestFrontEnd_NvmeControllerStats(t *testing.T) {
 			true,
 		},
 		"valid request with error code from SPDK response": {
-			testControllerID,
+			testControllerName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
@@ -1316,7 +1319,7 @@ func TestFrontEnd_NvmeControllerStats(t *testing.T) {
 			true,
 		},
 		"valid request with valid SPDK response": {
-			testControllerID,
+			testControllerName,
 			&pb.VolumeStats{
 				ReadBytesCount:    5,
 				ReadOpsCount:      4,
@@ -1331,11 +1334,11 @@ func TestFrontEnd_NvmeControllerStats(t *testing.T) {
 			true,
 		},
 		"valid request with unknown key": {
-			"unknown-controller-id",
+			server.ResourceIDToVolumeName("unknown-controller-id"),
 			nil,
 			[]string{""},
 			codes.Unknown,
-			fmt.Sprintf("error finding controller %v", "unknown-controller-id"),
+			fmt.Sprintf("error finding controller %v", server.ResourceIDToVolumeName("unknown-controller-id")),
 			false,
 		},
 	}
@@ -1346,9 +1349,9 @@ func TestFrontEnd_NvmeControllerStats(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID] = &testSubsystem
-			testEnv.opiSpdkServer.Controllers[testControllerID] = &testController
-			testEnv.opiSpdkServer.Namespaces[testNamespaceID] = &testNamespace
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
 
 			request := &pb.NvmeControllerStatsRequest{Id: &pc.ObjectKey{Value: tt.in}}
 			response, err := testEnv.client.NvmeControllerStats(testEnv.ctx, request)
@@ -1361,7 +1364,7 @@ func TestFrontEnd_NvmeControllerStats(t *testing.T) {
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
-						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+						t.Error("error code: expected", tt.errCode, "received", er.Code())
 					}
 					if er.Message() != tt.errMsg {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
@@ -1374,7 +1377,7 @@ func TestFrontEnd_NvmeControllerStats(t *testing.T) {
 
 func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 	spec := &pb.NvmeNamespaceSpec{
-		SubsystemId: &pc.ObjectKey{Value: testSubsystemID},
+		SubsystemId: &pc.ObjectKey{Value: testSubsystemName},
 		HostNsid:    0,
 		VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
 		Uuid:        &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
@@ -1392,19 +1395,19 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 	}{
 		"valid request with invalid SPDK response": {
 			&pb.NvmeNamespace{
-				Name: testNamespaceID,
+				Name: testNamespaceName,
 				Spec: spec,
 			},
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not create NS: %v", testNamespaceID),
+			fmt.Sprintf("Could not create NS: %v", testNamespaceName),
 			true,
 			false,
 		},
 		"valid request with empty SPDK response": {
 			&pb.NvmeNamespace{
-				Name: testNamespaceID,
+				Name: testNamespaceName,
 				Spec: spec,
 			},
 			nil,
@@ -1416,7 +1419,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 		},
 		"valid request with ID mismatch SPDK response": {
 			&pb.NvmeNamespace{
-				Name: testNamespaceID,
+				Name: testNamespaceName,
 				Spec: spec,
 			},
 			nil,
@@ -1428,7 +1431,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 		},
 		"valid request with error code from SPDK response": {
 			&pb.NvmeNamespace{
-				Name: testNamespaceID,
+				Name: testNamespaceName,
 				Spec: spec,
 			},
 			nil,
@@ -1440,9 +1443,9 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 		},
 		"valid request with valid SPDK response": {
 			&pb.NvmeNamespace{
-				Name: testNamespaceID,
+				Name: testNamespaceName,
 				Spec: &pb.NvmeNamespaceSpec{
-					SubsystemId: &pc.ObjectKey{Value: testSubsystemID},
+					SubsystemId: &pc.ObjectKey{Value: testSubsystemName},
 					HostNsid:    22,
 					VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
 					Uuid:        &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
@@ -1451,9 +1454,9 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 				},
 			},
 			&pb.NvmeNamespace{
-				Name: testNamespaceID,
+				Name: testNamespaceName,
 				Spec: &pb.NvmeNamespaceSpec{
-					SubsystemId: &pc.ObjectKey{Value: testSubsystemID},
+					SubsystemId: &pc.ObjectKey{Value: testSubsystemName},
 					HostNsid:    22,
 					VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
 					Uuid:        &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
@@ -1473,19 +1476,19 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 		},
 		"valid request with invalid SPDK second attach response": {
 			&pb.NvmeNamespace{
-				Name: testNamespaceID,
+				Name: testNamespaceName,
 				Spec: spec,
 			},
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0, "ns_instance_id": 17}}`, `{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not attach NS: %v", testNamespaceID),
+			fmt.Sprintf("Could not attach NS: %v", testNamespaceName),
 			true,
 			false,
 		},
 		"already exists": {
 			&pb.NvmeNamespace{
-				Name: testNamespaceID,
+				Name: testNamespaceName,
 				Spec: spec,
 			},
 			&testNamespace,
@@ -1503,15 +1506,15 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID] = &testSubsystem
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID].Name = testSubsystemID
-			testEnv.opiSpdkServer.Controllers[testControllerID] = &testController
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName].Name = testSubsystemName
+			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
 			if tt.exist {
-				testEnv.opiSpdkServer.Namespaces[testNamespaceID] = &testNamespace
-				testEnv.opiSpdkServer.Namespaces[testNamespaceID].Name = testNamespaceID
+				testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
+				testEnv.opiSpdkServer.Namespaces[testNamespaceName].Name = testNamespaceName
 			}
 			if tt.out != nil {
-				tt.out.Name = testNamespaceID
+				tt.out.Name = testNamespaceName
 			}
 
 			request := &pb.CreateNvmeNamespaceRequest{NvmeNamespace: tt.in, NvmeNamespaceId: testNamespaceID}
@@ -1530,7 +1533,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
-						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+						t.Error("error code: expected", tt.out, "received", er.Code())
 					}
 					if er.Message() != tt.errMsg {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
@@ -1552,7 +1555,7 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 	}{
 		"unimplemented method": {
 			&pb.NvmeNamespace{
-				Name: testNamespaceID,
+				Name: testNamespaceName,
 			},
 			nil,
 			[]string{""},
@@ -1562,12 +1565,12 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 		},
 		"valid request with unknown key": {
 			&pb.NvmeNamespace{
-				Name: "unknown-id",
+				Name: server.ResourceIDToVolumeName("unknown-id"),
 			},
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
 			false,
 		},
 	}
@@ -1578,19 +1581,19 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID] = &testSubsystem
-			testEnv.opiSpdkServer.Controllers[testControllerID] = &testController
-			testEnv.opiSpdkServer.Namespaces[testNamespaceID] = &testNamespace
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
 			request := &pb.UpdateNvmeNamespaceRequest{NvmeNamespace: tt.in}
 			response, err := testEnv.client.UpdateNvmeNamespace(testEnv.ctx, request)
 			if response != nil {
-				t.Error("response: expected", codes.Unimplemented, "received", response)
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
-						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+						t.Error("error code: expected", tt.errCode, "received", er.Code())
 					}
 					if er.Message() != tt.errMsg {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
@@ -1613,17 +1616,17 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 		token   string
 	}{
 		"valid request with invalid SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status":1}}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not list NS: %v", testSubsystemID),
+			fmt.Sprintf("Could not list NS: %v", testSubsystemName),
 			true,
 			0,
 			"",
 		},
 		"valid request with invalid marshal SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
@@ -1633,7 +1636,7 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			"",
 		},
 		"valid request with empty SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -1643,7 +1646,7 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			"",
 		},
 		"valid request with ID mismatch SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status":1}}`},
 			codes.Unknown,
@@ -1653,7 +1656,7 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			"",
 		},
 		"valid request with error code from SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
@@ -1663,7 +1666,7 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			"",
 		},
 		"pagination negative": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{},
 			codes.InvalidArgument,
@@ -1673,7 +1676,7 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			"",
 		},
 		"pagination error": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{},
 			codes.NotFound,
@@ -1683,7 +1686,7 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			"unknown-pagination-token",
 		},
 		"pagination": {
-			testSubsystemID,
+			testSubsystemName,
 			[]*pb.NvmeNamespace{
 				{
 					Spec: &pb.NvmeNamespaceSpec{
@@ -1699,7 +1702,7 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			"",
 		},
 		"pagination overflow": {
-			testSubsystemID,
+			testSubsystemName,
 			[]*pb.NvmeNamespace{
 				{
 					Spec: &pb.NvmeNamespaceSpec{
@@ -1725,7 +1728,7 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			"",
 		},
 		"pagination offset": {
-			testSubsystemID,
+			testSubsystemName,
 			[]*pb.NvmeNamespace{
 				{
 					Spec: &pb.NvmeNamespaceSpec{
@@ -1741,7 +1744,7 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			"existing-pagination-token",
 		},
 		"valid request with valid SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			[]*pb.NvmeNamespace{
 				{
 					Spec: &pb.NvmeNamespaceSpec{
@@ -1767,11 +1770,11 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			"",
 		},
 		"valid request with unknown key": {
-			"unknown-namespace-id",
+			server.ResourceIDToVolumeName("unknown-namespace-id"),
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "unknown-namespace-id"),
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-namespace-id")),
 			false,
 			0,
 			"",
@@ -1784,9 +1787,9 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID] = &testSubsystem
-			testEnv.opiSpdkServer.Controllers[testControllerID] = &testController
-			testEnv.opiSpdkServer.Namespaces[testNamespaceID] = &testNamespace
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
 			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
 
 			request := &pb.ListNvmeNamespacesRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
@@ -1800,7 +1803,7 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
-						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+						t.Error("error code: expected", tt.errCode, "received", er.Code())
 					}
 					if er.Message() != tt.errMsg {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
@@ -1821,15 +1824,15 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 		start   bool
 	}{
 		"valid request with invalid SPDK response": {
-			testNamespaceID,
+			testNamespaceName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status":1}}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not get NS: %v", testNamespaceID),
+			fmt.Sprintf("Could not get NS: %v", testNamespaceName),
 			true,
 		},
 		"valid request with invalid marshal SPDK response": {
-			testNamespaceID,
+			testNamespaceName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
@@ -1837,7 +1840,7 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 			true,
 		},
 		"valid request with empty SPDK response": {
-			testNamespaceID,
+			testNamespaceName,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -1845,7 +1848,7 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 			true,
 		},
 		"valid request with ID mismatch SPDK response": {
-			testNamespaceID,
+			testNamespaceName,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status":1}}`},
 			codes.Unknown,
@@ -1853,7 +1856,7 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 			true,
 		},
 		"valid request with error code from SPDK response": {
-			testNamespaceID,
+			testNamespaceName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
@@ -1861,9 +1864,9 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 			true,
 		},
 		"valid request with valid SPDK response": {
-			testNamespaceID,
+			testNamespaceName,
 			&pb.NvmeNamespace{
-				Name: testNamespaceID,
+				Name: testNamespaceName,
 				Spec: &pb.NvmeNamespaceSpec{
 					Nguid: "0x25f9cbc45d0f976fb9c1a14ff5aed4b0",
 				},
@@ -1893,12 +1896,12 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID] = &testSubsystem
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID].Name = testSubsystemID
-			testEnv.opiSpdkServer.Controllers[testControllerID] = &testController
-			testEnv.opiSpdkServer.Controllers[testControllerID].Name = testControllerID
-			testEnv.opiSpdkServer.Namespaces[testNamespaceID] = &testNamespace
-			testEnv.opiSpdkServer.Namespaces[testNamespaceID].Name = testNamespaceID
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName].Name = testSubsystemName
+			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Controllers[testControllerName].Name = testControllerName
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName].Name = testNamespaceID
 
 			request := &pb.GetNvmeNamespaceRequest{Name: tt.in}
 			response, err := testEnv.client.GetNvmeNamespace(testEnv.ctx, request)
@@ -1914,7 +1917,7 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
-						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+						t.Error("error code: expected", tt.errCode, "received", er.Code())
 					}
 					if er.Message() != tt.errMsg {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
@@ -1935,15 +1938,15 @@ func TestFrontEnd_NvmeNamespaceStats(t *testing.T) {
 		start   bool
 	}{
 		"valid request with invalid SPDK response": {
-			testNamespaceID,
+			testNamespaceName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not stats NS: %v", testNamespaceID),
+			fmt.Sprintf("Could not stats NS: %v", testNamespaceName),
 			true,
 		},
 		"valid request with invalid marshal SPDK response": {
-			testNamespaceID,
+			testNamespaceName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
@@ -1951,7 +1954,7 @@ func TestFrontEnd_NvmeNamespaceStats(t *testing.T) {
 			true,
 		},
 		"valid request with empty SPDK response": {
-			testNamespaceID,
+			testNamespaceName,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -1959,7 +1962,7 @@ func TestFrontEnd_NvmeNamespaceStats(t *testing.T) {
 			true,
 		},
 		"valid request with ID mismatch SPDK response": {
-			testNamespaceID,
+			testNamespaceName,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.Unknown,
@@ -1967,7 +1970,7 @@ func TestFrontEnd_NvmeNamespaceStats(t *testing.T) {
 			true,
 		},
 		"valid request with error code from SPDK response": {
-			testNamespaceID,
+			testNamespaceName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
@@ -1975,7 +1978,7 @@ func TestFrontEnd_NvmeNamespaceStats(t *testing.T) {
 			true,
 		},
 		"valid request with valid SPDK response": {
-			testNamespaceID,
+			testNamespaceName,
 			&pb.VolumeStats{
 				ReadBytesCount:    2,
 				ReadOpsCount:      1,
@@ -2005,9 +2008,9 @@ func TestFrontEnd_NvmeNamespaceStats(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID] = &testSubsystem
-			testEnv.opiSpdkServer.Controllers[testControllerID] = &testController
-			testEnv.opiSpdkServer.Namespaces[testNamespaceID] = &testNamespace
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
 
 			request := &pb.NvmeNamespaceStatsRequest{NamespaceId: &pc.ObjectKey{Value: tt.in}}
 			response, err := testEnv.client.NvmeNamespaceStats(testEnv.ctx, request)
@@ -2020,7 +2023,7 @@ func TestFrontEnd_NvmeNamespaceStats(t *testing.T) {
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
-						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+						t.Error("error code: expected", tt.errCode, "received", er.Code())
 					}
 					if er.Message() != tt.errMsg {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
@@ -2042,25 +2045,25 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 		missing bool
 	}{
 		"valid request with invalid SPDK response": {
-			testNamespaceID,
+			testNamespaceName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not detach NS: %v", testNamespaceID),
+			fmt.Sprintf("Could not detach NS: %v", testNamespaceName),
 			true,
 			false,
 		},
 		"valid request with invalid SPDK second response": {
-			testNamespaceID,
+			testNamespaceName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0}}`, `{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not delete NS: %v", testNamespaceID),
+			fmt.Sprintf("Could not delete NS: %v", testNamespaceName),
 			true,
 			false,
 		},
 		"valid request with empty SPDK response": {
-			testNamespaceID,
+			testNamespaceName,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -2069,7 +2072,7 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
-			testNamespaceID,
+			testNamespaceName,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.Unknown,
@@ -2078,7 +2081,7 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 			false,
 		},
 		"valid request with error code from SPDK response": {
-			testNamespaceID,
+			testNamespaceName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":{"status": 1}}`},
 			codes.Unknown,
@@ -2087,7 +2090,7 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 			false,
 		},
 		"valid request with valid SPDK response": {
-			testNamespaceID,
+			testNamespaceName,
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0}}`, `{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0}}`},
 			codes.OK,
@@ -2096,11 +2099,11 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 			false,
 		},
 		"valid request with unknown key": {
-			"unknown-namespace-id",
+			server.ResourceIDToVolumeName("unknown-namespace-id"),
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "unknown-namespace-id"),
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-namespace-id")),
 			false,
 			false,
 		},
@@ -2121,15 +2124,15 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID] = &testSubsystem
-			testEnv.opiSpdkServer.Controllers[testControllerID] = &testController
-			testEnv.opiSpdkServer.Namespaces[testNamespaceID] = &testNamespace
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
 			request := &pb.DeleteNvmeNamespaceRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNvmeNamespace(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
-						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+						t.Error("error code: expected", tt.errCode, "received", er.Code())
 					}
 					if er.Message() != tt.errMsg {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
@@ -2154,16 +2157,16 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 		missing bool
 	}{
 		"valid request with invalid SPDK response": {
-			testControllerID,
+			testControllerName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not delete CTRL: %v", testControllerID),
+			fmt.Sprintf("Could not delete CTRL: %v", testControllerName),
 			true,
 			false,
 		},
 		"valid request with empty SPDK response": {
-			testControllerID,
+			testControllerName,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -2172,7 +2175,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
-			testControllerID,
+			testControllerName,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.Unknown,
@@ -2181,7 +2184,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with error code from SPDK response": {
-			testControllerID,
+			testControllerName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":{"status": 1}}`},
 			codes.Unknown,
@@ -2190,7 +2193,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with valid SPDK response": {
-			testControllerID,
+			testControllerName,
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0}}`},
 			codes.OK,
@@ -2199,11 +2202,11 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with unknown key": {
-			"unknown-controller-id",
+			server.ResourceIDToVolumeName("unknown-controller-id"),
 			nil,
 			[]string{""},
 			codes.Unknown,
-			fmt.Sprintf("error finding controller %v", "unknown-controller-id"),
+			fmt.Sprintf("error finding controller %v", server.ResourceIDToVolumeName("unknown-controller-id")),
 			false,
 			false,
 		},
@@ -2224,16 +2227,16 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID] = &testSubsystem
-			testEnv.opiSpdkServer.Controllers[testControllerID] = &testController
-			testEnv.opiSpdkServer.Namespaces[testNamespaceID] = &testNamespace
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
 
 			request := &pb.DeleteNvmeControllerRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNvmeController(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
-						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+						t.Error("error code: expected", tt.errCode, "received", er.Code())
 					}
 					if er.Message() != tt.errMsg {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
@@ -2258,7 +2261,7 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 		missing bool
 	}{
 		"valid request with invalid SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.InvalidArgument,
@@ -2267,7 +2270,7 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 			false,
 		},
 		"valid request with empty SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -2276,7 +2279,7 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.Unknown,
@@ -2285,7 +2288,7 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 			false,
 		},
 		"valid request with error code from SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":{"status": 1}}`},
 			codes.Unknown,
@@ -2294,7 +2297,7 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 			false,
 		},
 		"valid request with valid SPDK response": {
-			testSubsystemID,
+			testSubsystemName,
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0}}`},
 			codes.OK,
@@ -2303,11 +2306,11 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 			false,
 		},
 		"valid request with unknown key": {
-			"unknown-subsystem-id",
+			server.ResourceIDToVolumeName("unknown-subsystem-id"),
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "unknown-subsystem-id"),
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-subsystem-id")),
 			false,
 			false,
 		},
@@ -2328,16 +2331,16 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Subsystems[testSubsystemID] = &testSubsystem
-			testEnv.opiSpdkServer.Controllers[testControllerID] = &testController
-			testEnv.opiSpdkServer.Namespaces[testNamespaceID] = &testNamespace
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
 
 			request := &pb.DeleteNvmeSubsystemRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNvmeSubsystem(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
-						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+						t.Error("error code: expected", tt.errCode, "received", er.Code())
 					}
 					if er.Message() != tt.errMsg {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
