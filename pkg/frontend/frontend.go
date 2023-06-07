@@ -71,6 +71,11 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.NvmeSubsystemId != "" {
+		err := resourceid.ValidateUserSettable(in.NvmeSubsystemId)
+		if err != nil {
+			log.Printf("error: %v", err)
+			return nil, err
+		}
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeSubsystemId, in.NvmeSubsystem.Name)
 		resourceID = in.NvmeSubsystemId
 	}
@@ -271,6 +276,11 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.NvmeControllerId != "" {
+		err := resourceid.ValidateUserSettable(in.NvmeControllerId)
+		if err != nil {
+			log.Printf("error: %v", err)
+			return nil, err
+		}
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeControllerId, in.NvmeController.Name)
 		resourceID = in.NvmeControllerId
 	}
@@ -534,6 +544,11 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.NvmeNamespaceId != "" {
+		err := resourceid.ValidateUserSettable(in.NvmeNamespaceId)
+		if err != nil {
+			log.Printf("error: %v", err)
+			return nil, err
+		}
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeNamespaceId, in.NvmeNamespace.Name)
 		resourceID = in.NvmeNamespaceId
 	}
