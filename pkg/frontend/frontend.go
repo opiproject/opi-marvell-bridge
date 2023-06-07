@@ -327,10 +327,10 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	s.Controllers[in.NvmeController.Name] = in.NvmeController
-	s.Controllers[in.NvmeController.Name].Spec.NvmeControllerId = int32(result.CtrlrID)
-	s.Controllers[in.NvmeController.Name].Status = &pb.NvmeControllerStatus{Active: true}
 	response := server.ProtoClone(in.NvmeController)
+	response.Spec.NvmeControllerId = int32(result.CtrlrID)
+	response.Status = &pb.NvmeControllerStatus{Active: true}
+	s.Controllers[in.NvmeController.Name] = response
 	return response, nil
 }
 
@@ -419,10 +419,10 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	s.Controllers[in.NvmeController.Name] = in.NvmeController
-	s.Controllers[in.NvmeController.Name].Spec.NvmeControllerId = int32(result.CtrlrID)
-	s.Controllers[in.NvmeController.Name].Status = &pb.NvmeControllerStatus{Active: true}
 	response := server.ProtoClone(in.NvmeController)
+	response.Spec.NvmeControllerId = int32(result.CtrlrID)
+	response.Status = &pb.NvmeControllerStatus{Active: true}
+	s.Controllers[in.NvmeController.Name] = response
 	return response, nil
 }
 
@@ -598,9 +598,6 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-
-	s.Namespaces[in.NvmeNamespace.Name] = in.NvmeNamespace
-
 	// Now, attach this new NS to ALL controllers
 	for _, c := range s.Controllers {
 		if c.Spec.SubsystemId.Value != in.NvmeNamespace.Spec.SubsystemId.Value {
@@ -625,6 +622,7 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 	}
 	response := server.ProtoClone(in.NvmeNamespace)
 	response.Status = &pb.NvmeNamespaceStatus{PciState: 2, PciOperState: 1}
+	s.Namespaces[in.NvmeNamespace.Name] = response
 	return response, nil
 }
 
