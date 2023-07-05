@@ -2,6 +2,7 @@
 
 [![Linters](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/linters.yml/badge.svg)](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/linters.yml)
 [![CodeQL](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/codeql.yml/badge.svg)](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/opiproject/opi-marvell-bridge/badge)](https://securityscorecards.dev/viewer/?platform=github.com&org=opiproject&repo=opi-marvell-bridge)
 [![tests](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/go.yml/badge.svg)](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/go.yml)
 [![Docker](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/docker-publish.yml)
 [![License](https://img.shields.io/github/license/opiproject/opi-marvell-bridge?style=flat-square&color=blue&label=License)](https://github.com/opiproject/opi-marvell-bridge/blob/master/LICENSE)
