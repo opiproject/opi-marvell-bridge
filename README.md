@@ -1,6 +1,7 @@
 # OPI gRPC to Marvell SDK bridge third party repo
 
 [![Linters](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/linters.yml/badge.svg)](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/linters.yml)
+[![CodeQL](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/codeql.yml/badge.svg)](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/codeql.yml)
 [![tests](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/go.yml/badge.svg)](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/go.yml)
 [![Docker](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/opiproject/opi-marvell-bridge/actions/workflows/docker-publish.yml)
 [![License](https://img.shields.io/github/license/opiproject/opi-marvell-bridge?style=flat-square&color=blue&label=License)](https://github.com/opiproject/opi-marvell-bridge/blob/master/LICENSE)
