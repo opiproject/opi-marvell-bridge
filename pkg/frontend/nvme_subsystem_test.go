@@ -35,7 +35,6 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 		exist   bool
 	}{
 		"illegal resource_id": {
@@ -44,10 +43,9 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 				Spec: spec,
 			},
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
-			false,
 			false,
 		},
 		"valid request with invalid SPDK response": {
@@ -60,7 +58,6 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result": {"status": 1}}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create NQN: %v", "nqn.2022-09.io.spdk:opi3"),
-			true,
 			false,
 		},
 		"valid request with empty SPDK response": {
@@ -73,7 +70,6 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_create_subsystem: %v", "EOF"),
-			true,
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
@@ -86,7 +82,6 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_create_subsystem: %v", "json response ID mismatch"),
-			true,
 			false,
 		},
 		"valid request with error code from SPDK response": {
@@ -99,7 +94,6 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":{"status": 1}}`},
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_create_subsystem: %v", "json response error: myopierr"),
-			true,
 			false,
 		},
 		"valid request with error code from SPDK version response": {
@@ -112,7 +106,6 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0}}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("spdk_get_version: %v", "json response error: myopierr"),
-			true,
 			false,
 		},
 		"valid request with valid SPDK response": {
@@ -131,7 +124,6 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0}}`, `{"jsonrpc":"2.0","id":%d,"result":{"version":"SPDK v20.10","fields":{"major":20,"minor":10,"patch":0,"suffix":""}}}`},
 			codes.OK,
 			"",
-			true,
 			false,
 		},
 		"already exists": {
@@ -141,10 +133,9 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 				Spec: spec,
 			},
 			&testSubsystem,
-			[]string{""},
+			[]string{},
 			codes.OK,
 			"",
-			false,
 			true,
 		},
 	}
@@ -152,7 +143,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
@@ -193,7 +184,6 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 		missing bool
 	}{
 		"valid request with invalid SPDK response": {
@@ -202,7 +192,6 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not delete NQN: %v", "nqn.2022-09.io.spdk:opi3"),
-			true,
 			false,
 		},
 		"valid request with empty SPDK response": {
@@ -211,7 +200,6 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_delete_subsystem: %v", "EOF"),
-			true,
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
@@ -220,7 +208,6 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_delete_subsystem: %v", "json response ID mismatch"),
-			true,
 			false,
 		},
 		"valid request with error code from SPDK response": {
@@ -229,7 +216,6 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":{"status": 1}}`},
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_delete_subsystem: %v", "json response error: myopierr"),
-			true,
 			false,
 		},
 		"valid request with valid SPDK response": {
@@ -238,34 +224,30 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0}}`},
 			codes.OK,
 			"",
-			true,
 			false,
 		},
 		"valid request with unknown key": {
 			server.ResourceIDToVolumeName("unknown-subsystem-id"),
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-subsystem-id")),
-			false,
 			false,
 		},
 		"unknown key with missing allowed": {
 			"unknown-id",
 			&emptypb.Empty{},
-			[]string{""},
+			[]string{},
 			codes.OK,
 			"",
-			false,
 			true,
 		},
 		"malformed name": {
 			"-ABC-DEF",
 			&emptypb.Empty{},
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
 			false,
 		},
 	}
@@ -273,7 +255,7 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
@@ -309,7 +291,6 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 	}{
 		"invalid fieldmask": {
 			&fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
@@ -317,10 +298,9 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 				Name: testSubsystemName,
 			},
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
-			false,
 		},
 		"unimplemented method": {
 			nil,
@@ -328,10 +308,9 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 				Name: testSubsystemName,
 			},
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unimplemented,
 			fmt.Sprintf("%v method is not implemented", "UpdateNvmeSubsystem"),
-			false,
 		},
 		"valid request with unknown key": {
 			nil,
@@ -342,10 +321,9 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 				},
 			},
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
-			false,
 		},
 		"malformed name": {
 			nil,
@@ -354,14 +332,13 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
 		},
 	}
 
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
@@ -395,7 +372,6 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 		size    int32
 		token   string
 	}{
@@ -404,7 +380,6 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not list %v", "subsystems"),
-			true,
 			0,
 			"",
 		},
@@ -413,7 +388,6 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_get_subsys_list: %v", "EOF"),
-			true,
 			0,
 			"",
 		},
@@ -422,7 +396,6 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_get_subsys_list: %v", "json response ID mismatch"),
-			true,
 			0,
 			"",
 		},
@@ -431,7 +404,6 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":{"status": 1}}`},
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_get_subsys_list: %v", "json response error: myopierr"),
-			true,
 			0,
 			"",
 		},
@@ -440,7 +412,6 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 			[]string{},
 			codes.InvalidArgument,
 			"negative PageSize is not allowed",
-			false,
 			-10,
 			"",
 		},
@@ -449,7 +420,6 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find pagination token %s", "unknown-pagination-token"),
-			false,
 			0,
 			"unknown-pagination-token",
 		},
@@ -460,7 +430,6 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0, "subsys_list": [{"subnqn": "nqn.2022-09.io.spdk:opi1"},{"subnqn": "nqn.2022-09.io.spdk:opi2"},{"subnqn": "nqn.2022-09.io.spdk:opi3"}]}}`},
 			codes.OK,
 			"",
-			true,
 			1,
 			"",
 		},
@@ -473,7 +442,6 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0, "subsys_list": [{"subnqn": "nqn.2022-09.io.spdk:opi1"},{"subnqn": "nqn.2022-09.io.spdk:opi2"},{"subnqn": "nqn.2022-09.io.spdk:opi3"}]}}`},
 			codes.OK,
 			"",
-			true,
 			1000,
 			"",
 		},
@@ -484,7 +452,6 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0, "subsys_list": [{"subnqn": "nqn.2022-09.io.spdk:opi1"},{"subnqn": "nqn.2022-09.io.spdk:opi2"},{"subnqn": "nqn.2022-09.io.spdk:opi3"}]}}`},
 			codes.OK,
 			"",
-			true,
 			1,
 			"existing-pagination-token",
 		},
@@ -497,7 +464,6 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0, "subsys_list": [{"subnqn": "nqn.2022-09.io.spdk:opi1"},{"subnqn": "nqn.2022-09.io.spdk:opi2"},{"subnqn": "nqn.2022-09.io.spdk:opi3"}]}}`},
 			codes.OK,
 			"",
-			true,
 			0,
 			"",
 		},
@@ -506,7 +472,7 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
@@ -547,7 +513,6 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 	}{
 		"valid request with invalid SPDK response": {
 			testSubsystemName,
@@ -555,7 +520,6 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not list NQN: %v", "nqn.2022-09.io.spdk:opi3"),
-			true,
 		},
 		"valid request with empty SPDK response": {
 			testSubsystemName,
@@ -563,7 +527,6 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_get_subsys_list: %v", "EOF"),
-			true,
 		},
 		"valid request with ID mismatch SPDK response": {
 			testSubsystemName,
@@ -571,7 +534,6 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_get_subsys_list: %v", "json response ID mismatch"),
-			true,
 		},
 		"valid request with error code from SPDK response": {
 			testSubsystemName,
@@ -579,7 +541,6 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":{"status": 1}}`},
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_get_subsys_list: %v", "json response error: myopierr"),
-			true,
 		},
 		"valid request with valid SPDK response": {
 			testSubsystemName,
@@ -590,30 +551,27 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0, "subsys_list": [{"subnqn": "nqn.2022-09.io.spdk:opi1"},{"subnqn": "nqn.2022-09.io.spdk:opi2"},{"subnqn": "nqn.2022-09.io.spdk:opi3"}]}}`},
 			codes.OK,
 			"",
-			true,
 		},
 		"valid request with unknown key": {
 			server.ResourceIDToVolumeName("unknown-subsystem-id"),
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-subsystem-id")),
-			false,
 		},
 		"malformed name": {
 			"-ABC-DEF",
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
 		},
 	}
 
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
@@ -648,7 +606,6 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 	}{
 		"valid request with invalid SPDK response": {
 			testSubsystemName,
@@ -656,7 +613,6 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not stats NQN: %v", "nqn.2022-09.io.spdk:opi3"),
-			true,
 		},
 		"valid request with invalid marshal SPDK response": {
 			testSubsystemName,
@@ -664,7 +620,6 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_subsys_get_info: %v", "json: cannot unmarshal array into Go value of type models.MrvlNvmGetSubsysInfoResult"),
-			true,
 		},
 		"valid request with empty SPDK response": {
 			testSubsystemName,
@@ -672,7 +627,6 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_subsys_get_info: %v", "EOF"),
-			true,
 		},
 		"valid request with ID mismatch SPDK response": {
 			testSubsystemName,
@@ -680,7 +634,6 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"status": 1}}`},
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_subsys_get_info: %v", "json response ID mismatch"),
-			true,
 		},
 		"valid request with error code from SPDK response": {
 			testSubsystemName,
@@ -688,7 +641,6 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
 			fmt.Sprintf("mrvl_nvm_subsys_get_info: %v", "json response error: myopierr"),
-			true,
 		},
 		"valid request with valid SPDK response": {
 			testSubsystemName,
@@ -699,15 +651,13 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":{"status":0,"subsys_list":[{"subnqn":"nqn.2014-08.org.Nvmexpress.discovery","mn":"OCTEON NVME 0.0.1","sn":"OCTNVME0000000000002","max_namespaces":16,"min_ctrlr_id":1,"max_ctrlr_id":8,"num_ns":2,"num_total_ctrlr":2,"num_active_ctrlr":2,"ns_list":[{"ns_instance_id":1,"bdev":"bdev01","ctrlr_id_list":[{"ctrlr_id":1},{"ctrlr_id":2}]},{"ns_instance_id":1,"bdev":"bdev02","ctrlr_id_list":[{"ctrlr_id":3}]}]}]}}`},
 			codes.OK,
 			"",
-			true,
 		},
 		"valid request with unknown key": {
 			"unknown-subsystem-id",
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", "unknown-subsystem-id"),
-			false,
 		},
 		"malformed name": {
 			"-ABC-DEF",
@@ -715,14 +665,13 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
 		},
 	}
 
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = &testSubsystem
