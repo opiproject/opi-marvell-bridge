@@ -43,7 +43,7 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 		return nil, err
 	}
 	// check input parameters validity
-	if in.NvmeNamespace.Spec == nil || in.NvmeNamespace.Spec.SubsystemId == nil || in.NvmeNamespace.Spec.SubsystemId.Value == "" {
+	if in.NvmeNamespace.Spec == nil || in.NvmeNamespace.Spec.SubsystemNameRef == "" {
 		return nil, status.Error(codes.InvalidArgument, "invalid input subsystem parameters")
 	}
 	// see https://google.aip.dev/133#user-specified-ids
@@ -65,9 +65,9 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 		return namespace, nil
 	}
 	// not found, so create a new one
-	subsys, ok := s.Subsystems[in.NvmeNamespace.Spec.SubsystemId.Value]
+	subsys, ok := s.Subsystems[in.NvmeNamespace.Spec.SubsystemNameRef]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvmeNamespace.Spec.SubsystemId.Value)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvmeNamespace.Spec.SubsystemNameRef)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 		Eui64:       strconv.FormatInt(in.NvmeNamespace.Spec.Eui64, 10),
 		UUID:        in.NvmeNamespace.Spec.Uuid.Value,
 		ShareEnable: 1,
-		Bdev:        in.NvmeNamespace.Spec.VolumeId.Value,
+		Bdev:        in.NvmeNamespace.Spec.VolumeNameRef,
 	}
 	var result models.MrvlNvmSubsysAllocNsResult
 	err := s.rpc.Call("mrvl_nvm_subsys_alloc_ns", &params, &result)
@@ -94,7 +94,7 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 	}
 	// Now, attach this new NS to ALL controllers
 	for _, c := range s.Controllers {
-		if c.Spec.SubsystemId.Value != in.NvmeNamespace.Spec.SubsystemId.Value {
+		if c.Spec.SubsystemNameRef != in.NvmeNamespace.Spec.SubsystemNameRef {
 			continue
 		}
 		params := models.MrvlNvmCtrlrAttachNsParams{
@@ -143,15 +143,15 @@ func (s *Server) DeleteNvmeNamespace(_ context.Context, in *pb.DeleteNvmeNamespa
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	subsys, ok := s.Subsystems[namespace.Spec.SubsystemId.Value]
+	subsys, ok := s.Subsystems[namespace.Spec.SubsystemNameRef]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find subsystem %s", namespace.Spec.SubsystemId.Value)
+		err := status.Errorf(codes.NotFound, "unable to find subsystem %s", namespace.Spec.SubsystemNameRef)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// First, detach this NS from ALL controllers
 	for _, c := range s.Controllers {
-		if c.Spec.SubsystemId.Value != namespace.Spec.SubsystemId.Value {
+		if c.Spec.SubsystemNameRef != namespace.Spec.SubsystemNameRef {
 			continue
 		}
 		params := models.MrvlNvmCtrlrDetachNsParams{
@@ -297,9 +297,9 @@ func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequ
 		return nil, err
 	}
 	log.Printf("error: %v", namespace)
-	subsys, ok := s.Subsystems[namespace.Spec.SubsystemId.Value]
+	subsys, ok := s.Subsystems[namespace.Spec.SubsystemNameRef]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", namespace.Spec.SubsystemId.Value)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", namespace.Spec.SubsystemNameRef)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -332,20 +332,20 @@ func (s *Server) NvmeNamespaceStats(_ context.Context, in *pb.NvmeNamespaceStats
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.NamespaceId.Value); err != nil {
+	if err := resourcename.Validate(in.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
-	namespace, ok := s.Namespaces[in.NamespaceId.Value]
+	namespace, ok := s.Namespaces[in.Name]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NamespaceId.Value)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	subsys, ok := s.Subsystems[namespace.Spec.SubsystemId.Value]
+	subsys, ok := s.Subsystems[namespace.Spec.SubsystemNameRef]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", namespace.Spec.SubsystemId.Value)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", namespace.Spec.SubsystemNameRef)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -362,7 +362,7 @@ func (s *Server) NvmeNamespaceStats(_ context.Context, in *pb.NvmeNamespaceStats
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
-		msg := fmt.Sprintf("Could not stats NS: %s", in.NamespaceId.Value)
+		msg := fmt.Sprintf("Could not stats NS: %s", in.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}

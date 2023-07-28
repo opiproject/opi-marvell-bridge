@@ -17,7 +17,6 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	"github.com/opiproject/gospdk/spdk"
-	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
@@ -96,7 +95,7 @@ var (
 	testControllerName = server.ResourceIDToVolumeName(testControllerID)
 	testController     = pb.NvmeController{
 		Spec: &pb.NvmeControllerSpec{
-			SubsystemId:      &pc.ObjectKey{Value: testSubsystemName},
+			SubsystemNameRef: testSubsystemName,
 			PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
 			NvmeControllerId: 17,
 		},
@@ -108,8 +107,8 @@ var (
 	testNamespaceName = server.ResourceIDToVolumeName(testNamespaceID)
 	testNamespace     = pb.NvmeNamespace{
 		Spec: &pb.NvmeNamespaceSpec{
-			HostNsid:    22,
-			SubsystemId: &pc.ObjectKey{Value: testSubsystemName},
+			HostNsid:         22,
+			SubsystemNameRef: testSubsystemName,
 		},
 		Status: &pb.NvmeNamespaceStatus{
 			PciState:     2,

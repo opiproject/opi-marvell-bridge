@@ -17,14 +17,13 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
-	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
 func TestFrontEnd_CreateNvmeController(t *testing.T) {
 	spec := &pb.NvmeControllerSpec{
-		SubsystemId:      &pc.ObjectKey{Value: testSubsystemName},
+		SubsystemNameRef: testSubsystemName,
 		PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2, PortId: 3},
 		NvmeControllerId: 1,
 		MaxNsq:           5,
@@ -105,7 +104,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			&pb.NvmeController{
 				Name: testControllerName,
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemId:      &pc.ObjectKey{Value: testSubsystemName},
+					SubsystemNameRef: testSubsystemName,
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2, PortId: 3},
 					NvmeControllerId: 17,
 					MaxNsq:           5,
@@ -117,12 +116,12 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			&pb.NvmeController{
 				Name: testControllerName,
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemId: &pc.ObjectKey{Value: testSubsystemName},
-					PcieId:      &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2, PortId: 3},
-					MaxNsq:      5,
-					MaxNcq:      6,
-					Sqes:        7,
-					Cqes:        8,
+					SubsystemNameRef: testSubsystemName,
+					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2, PortId: 3},
+					MaxNsq:           5,
+					MaxNcq:           6,
+					Sqes:             7,
+					Cqes:             8,
 				},
 				Status: &pb.NvmeControllerStatus{Active: true},
 			},
@@ -290,7 +289,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 
 func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 	spec := &pb.NvmeControllerSpec{
-		SubsystemId:      &pc.ObjectKey{Value: testSubsystemName},
+		SubsystemNameRef: testSubsystemName,
 		PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2, PortId: 3},
 		NvmeControllerId: 1,
 		MaxNsq:           5,
@@ -366,7 +365,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 			&pb.NvmeController{
 				Name: testControllerName,
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemId:      &pc.ObjectKey{Value: testSubsystemName},
+					SubsystemNameRef: testSubsystemName,
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2, PortId: 3},
 					NvmeControllerId: 17,
 					MaxNsq:           5,
@@ -378,12 +377,12 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 			&pb.NvmeController{
 				Name: testControllerName,
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemId: &pc.ObjectKey{Value: testSubsystemName},
-					PcieId:      &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2, PortId: 3},
-					MaxNsq:      5,
-					MaxNcq:      6,
-					Sqes:        7,
-					Cqes:        8,
+					SubsystemNameRef: testSubsystemName,
+					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2, PortId: 3},
+					MaxNsq:           5,
+					MaxNcq:           6,
+					Sqes:             7,
+					Cqes:             8,
 				},
 				Status: &pb.NvmeControllerStatus{Active: true},
 			},
@@ -798,7 +797,7 @@ func TestFrontEnd_NvmeControllerStats(t *testing.T) {
 			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
 			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
 
-			request := &pb.NvmeControllerStatsRequest{Id: &pc.ObjectKey{Value: tt.in}}
+			request := &pb.NvmeControllerStatsRequest{Name: tt.in}
 			response, err := testEnv.client.NvmeControllerStats(testEnv.ctx, request)
 
 			if !proto.Equal(response.GetStats(), tt.out) {

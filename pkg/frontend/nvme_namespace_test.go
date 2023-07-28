@@ -24,12 +24,12 @@ import (
 
 func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 	spec := &pb.NvmeNamespaceSpec{
-		SubsystemId: &pc.ObjectKey{Value: testSubsystemName},
-		HostNsid:    0,
-		VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
-		Uuid:        &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
-		Nguid:       "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
-		Eui64:       1967554867335598546,
+		SubsystemNameRef: testSubsystemName,
+		HostNsid:         0,
+		VolumeNameRef:    "Malloc1",
+		Uuid:             &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+		Nguid:            "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
+		Eui64:            1967554867335598546,
 	}
 	tests := map[string]struct {
 		id      string
@@ -104,23 +104,23 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			&pb.NvmeNamespace{
 				Name: testNamespaceName,
 				Spec: &pb.NvmeNamespaceSpec{
-					SubsystemId: &pc.ObjectKey{Value: testSubsystemName},
-					HostNsid:    22,
-					VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
-					Uuid:        &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
-					Nguid:       "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
-					Eui64:       1967554867335598546,
+					SubsystemNameRef: testSubsystemName,
+					HostNsid:         22,
+					VolumeNameRef:    "Malloc1",
+					Uuid:             &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+					Nguid:            "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
+					Eui64:            1967554867335598546,
 				},
 			},
 			&pb.NvmeNamespace{
 				Name: testNamespaceName,
 				Spec: &pb.NvmeNamespaceSpec{
-					SubsystemId: &pc.ObjectKey{Value: testSubsystemName},
-					HostNsid:    22,
-					VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
-					Uuid:        &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
-					Nguid:       "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
-					Eui64:       1967554867335598546,
+					SubsystemNameRef: testSubsystemName,
+					HostNsid:         22,
+					VolumeNameRef:    "Malloc1",
+					Uuid:             &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+					Nguid:            "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
+					Eui64:            1967554867335598546,
 				},
 				Status: &pb.NvmeNamespaceStatus{
 					PciState:     2,
@@ -781,7 +781,7 @@ func TestFrontEnd_NvmeNamespaceStats(t *testing.T) {
 			testEnv.opiSpdkServer.Controllers[testControllerName] = &testController
 			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = &testNamespace
 
-			request := &pb.NvmeNamespaceStatsRequest{NamespaceId: &pc.ObjectKey{Value: tt.in}}
+			request := &pb.NvmeNamespaceStatsRequest{Name: tt.in}
 			response, err := testEnv.client.NvmeNamespaceStats(testEnv.ctx, request)
 
 			if !proto.Equal(response.GetStats(), tt.out) {
