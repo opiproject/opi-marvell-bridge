@@ -142,6 +142,15 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			"",
 			true,
 		},
+		"no required field": {
+			testControllerID,
+			nil,
+			nil,
+			[]string{},
+			codes.Unknown,
+			"missing required field: nvme_controller",
+			false,
+		},
 	}
 
 	// run tests
@@ -252,6 +261,14 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+		},
+		"no required field": {
+			"",
+			nil,
+			[]string{},
+			codes.Unknown,
+			"missing required field: name",
 			false,
 		},
 	}
@@ -579,6 +596,15 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 			0,
 			"",
 		},
+		"no required field": {
+			"",
+			[]*pb.NvmeController{},
+			[]string{},
+			codes.Unknown,
+			"missing required field: parent",
+			0,
+			"",
+		},
 	}
 
 	// run tests
@@ -680,6 +706,13 @@ func TestFrontEnd_GetNvmeController(t *testing.T) {
 			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+		},
+		"no required field": {
+			"",
+			nil,
+			[]string{},
+			codes.Unknown,
+			"missing required field: name",
 		},
 	}
 
