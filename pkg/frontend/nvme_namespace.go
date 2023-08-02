@@ -323,9 +323,9 @@ func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequ
 	return &pb.NvmeNamespace{Name: in.Name, Spec: &pb.NvmeNamespaceSpec{Nguid: result.Nguid}, Status: &pb.NvmeNamespaceStatus{PciState: 2, PciOperState: 1}}, nil
 }
 
-// NvmeNamespaceStats gets an Nvme namespace stats
-func (s *Server) NvmeNamespaceStats(_ context.Context, in *pb.NvmeNamespaceStatsRequest) (*pb.NvmeNamespaceStatsResponse, error) {
-	log.Printf("NvmeNamespaceStats: Received from client: %v", in)
+// StatsNvmeNamespace gets an Nvme namespace stats
+func (s *Server) StatsNvmeNamespace(_ context.Context, in *pb.StatsNvmeNamespaceRequest) (*pb.StatsNvmeNamespaceResponse, error) {
+	log.Printf("StatsNvmeNamespace: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
@@ -366,7 +366,7 @@ func (s *Server) NvmeNamespaceStats(_ context.Context, in *pb.NvmeNamespaceStats
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.NvmeNamespaceStatsResponse{Stats: &pb.VolumeStats{
+	return &pb.StatsNvmeNamespaceResponse{Stats: &pb.VolumeStats{
 		ReadBytesCount:    int32(result.NumReadBytes),
 		ReadOpsCount:      int32(result.NumReadCmds),
 		WriteBytesCount:   int32(result.NumWriteBytes),
