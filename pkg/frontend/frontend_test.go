@@ -15,6 +15,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -96,8 +98,11 @@ var (
 	testController     = pb.NvmeController{
 		Spec: &pb.NvmeControllerSpec{
 			SubsystemNameRef: testSubsystemName,
-			PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
-			NvmeControllerId: 17,
+			PcieId: &pb.PciEndpoint{
+				PhysicalFunction: wrapperspb.Int32(1),
+				VirtualFunction:  wrapperspb.Int32(2),
+				PortId:           wrapperspb.Int32(0)},
+			NvmeControllerId: proto.Int32(17),
 		},
 		Status: &pb.NvmeControllerStatus{
 			Active: true,
@@ -109,6 +114,7 @@ var (
 		Spec: &pb.NvmeNamespaceSpec{
 			HostNsid:         22,
 			SubsystemNameRef: testSubsystemName,
+			VolumeNameRef:    "Malloc0",
 		},
 		Status: &pb.NvmeNamespaceStatus{
 			PciState:     2,
