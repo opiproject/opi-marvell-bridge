@@ -24,6 +24,7 @@ import (
 	"go.einride.tech/aip/resourcename"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -31,7 +32,7 @@ const autoCtrlrIDAllocation = -1
 
 func sortNvmeControllers(controllers []*pb.NvmeController) {
 	sort.Slice(controllers, func(i int, j int) bool {
-		return controllers[i].Spec.NvmeControllerId < controllers[j].Spec.NvmeControllerId
+		return *controllers[i].Spec.NvmeControllerId < *controllers[j].Spec.NvmeControllerId
 	})
 }
 
@@ -84,9 +85,9 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 	}
 	params := models.MrvlNvmSubsysCreateCtrlrParams{
 		Subnqn:       subsys.Spec.Nqn,
-		PcieDomainID: int(in.NvmeController.Spec.PcieId.PortId),
-		PfID:         int(in.NvmeController.Spec.PcieId.PhysicalFunction),
-		VfID:         int(in.NvmeController.Spec.PcieId.VirtualFunction),
+		PcieDomainID: int(in.NvmeController.Spec.PcieId.PortId.Value),
+		PfID:         int(in.NvmeController.Spec.PcieId.PhysicalFunction.Value),
+		VfID:         int(in.NvmeController.Spec.PcieId.VirtualFunction.Value),
 		CtrlrID:      ctrlrID,
 		MaxNsq:       int(in.NvmeController.Spec.MaxNsq),
 		MaxNcq:       int(in.NvmeController.Spec.MaxNcq),
@@ -105,7 +106,7 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	response := server.ProtoClone(in.NvmeController)
-	response.Spec.NvmeControllerId = int32(result.CtrlrID)
+	response.Spec.NvmeControllerId = proto.Int32(int32(result.CtrlrID))
 	response.Status = &pb.NvmeControllerStatus{Active: true}
 	s.Controllers[in.NvmeController.Name] = response
 	return response, nil
@@ -141,7 +142,7 @@ func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeContro
 
 	params := models.MrvlNvmSubsysRemoveCtrlrParams{
 		Subnqn:  subsys.Spec.Nqn,
-		CtrlrID: int(controller.Spec.NvmeControllerId),
+		CtrlrID: int(*controller.Spec.NvmeControllerId),
 		Force:   1,
 	}
 	var result models.MrvlNvmSubsysRemoveCtrlrResult
@@ -202,9 +203,9 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 	}
 	params := models.MrvlNvmSubsysCreateCtrlrParams{
 		Subnqn:       subsys.Spec.Nqn,
-		PcieDomainID: int(in.NvmeController.Spec.PcieId.PortId),
-		PfID:         int(in.NvmeController.Spec.PcieId.PhysicalFunction),
-		VfID:         int(in.NvmeController.Spec.PcieId.VirtualFunction),
+		PcieDomainID: int(in.NvmeController.Spec.PcieId.PortId.Value),
+		PfID:         int(in.NvmeController.Spec.PcieId.PhysicalFunction.Value),
+		VfID:         int(in.NvmeController.Spec.PcieId.VirtualFunction.Value),
 		CtrlrID:      ctrlrID,
 		MaxNsq:       int(in.NvmeController.Spec.MaxNsq),
 		MaxNcq:       int(in.NvmeController.Spec.MaxNcq),
@@ -223,7 +224,7 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	response := server.ProtoClone(in.NvmeController)
-	response.Spec.NvmeControllerId = int32(result.CtrlrID)
+	response.Spec.NvmeControllerId = proto.Int32(int32(result.CtrlrID))
 	response.Status = &pb.NvmeControllerStatus{Active: true}
 	s.Controllers[in.NvmeController.Name] = response
 	return response, nil
@@ -274,7 +275,7 @@ func (s *Server) ListNvmeControllers(_ context.Context, in *pb.ListNvmeControlle
 	Blobarray := make([]*pb.NvmeController, len(result.CtrlrIDList))
 	for i := range result.CtrlrIDList {
 		r := &result.CtrlrIDList[i]
-		Blobarray[i] = &pb.NvmeController{Spec: &pb.NvmeControllerSpec{NvmeControllerId: int32(r.CtrlrID)}}
+		Blobarray[i] = &pb.NvmeController{Spec: &pb.NvmeControllerSpec{NvmeControllerId: proto.Int32(int32(r.CtrlrID))}}
 	}
 	sortNvmeControllers(Blobarray)
 	return &pb.ListNvmeControllersResponse{NvmeControllers: Blobarray}, nil
@@ -307,7 +308,7 @@ func (s *Server) GetNvmeController(_ context.Context, in *pb.GetNvmeControllerRe
 
 	params := models.MrvlNvmGetCtrlrInfoParams{
 		Subnqn:  subsys.Spec.Nqn,
-		CtrlrID: int(controller.Spec.NvmeControllerId),
+		CtrlrID: int(*controller.Spec.NvmeControllerId),
 	}
 	var result models.MrvlNvmGetCtrlrInfoResult
 	err := s.rpc.Call("mrvl_nvm_ctrlr_get_info", &params, &result)
@@ -352,7 +353,7 @@ func (s *Server) StatsNvmeController(_ context.Context, in *pb.StatsNvmeControll
 
 	params := models.MrvlNvmGetCtrlrStatsParams{
 		Subnqn:  subsys.Spec.Nqn,
-		CtrlrID: int(controller.Spec.NvmeControllerId),
+		CtrlrID: int(*controller.Spec.NvmeControllerId),
 	}
 	var result models.MrvlNvmGetCtrlrStatsResult
 	err := s.rpc.Call("mrvl_nvm_get_ctrlr_stats", &params, &result)

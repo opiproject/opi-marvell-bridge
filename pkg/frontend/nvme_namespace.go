@@ -104,7 +104,7 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 		}
 		params := models.MrvlNvmCtrlrAttachNsParams{
 			Subnqn:       subsys.Spec.Nqn,
-			CtrlrID:      int(c.Spec.NvmeControllerId),
+			CtrlrID:      int(*c.Spec.NvmeControllerId),
 			NsInstanceID: int(in.NvmeNamespace.Spec.HostNsid),
 		}
 		var result models.MrvlNvmCtrlrAttachNsResult
@@ -161,7 +161,7 @@ func (s *Server) DeleteNvmeNamespace(_ context.Context, in *pb.DeleteNvmeNamespa
 		}
 		params := models.MrvlNvmCtrlrDetachNsParams{
 			Subnqn:       subsys.Spec.Nqn,
-			CtrlrID:      int(c.Spec.NvmeControllerId),
+			CtrlrID:      int(*c.Spec.NvmeControllerId),
 			NsInstanceID: int(namespace.Spec.HostNsid),
 		}
 		var result models.MrvlNvmCtrlrDetachNsResult
