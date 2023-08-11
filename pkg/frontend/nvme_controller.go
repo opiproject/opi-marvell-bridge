@@ -27,6 +27,8 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+const autoCtrlrIDAllocation = -1
+
 func sortNvmeControllers(controllers []*pb.NvmeController) {
 	sort.Slice(controllers, func(i int, j int) bool {
 		return controllers[i].Spec.NvmeControllerId < controllers[j].Spec.NvmeControllerId
@@ -76,12 +78,16 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 		return nil, err
 	}
 
+	ctrlrID := autoCtrlrIDAllocation
+	if in.NvmeController.Spec.NvmeControllerId != nil {
+		ctrlrID = int(*in.NvmeController.Spec.NvmeControllerId)
+	}
 	params := models.MrvlNvmSubsysCreateCtrlrParams{
 		Subnqn:       subsys.Spec.Nqn,
 		PcieDomainID: int(in.NvmeController.Spec.PcieId.PortId),
 		PfID:         int(in.NvmeController.Spec.PcieId.PhysicalFunction),
 		VfID:         int(in.NvmeController.Spec.PcieId.VirtualFunction),
-		CtrlrID:      int(in.NvmeController.Spec.NvmeControllerId),
+		CtrlrID:      ctrlrID,
 		MaxNsq:       int(in.NvmeController.Spec.MaxNsq),
 		MaxNcq:       int(in.NvmeController.Spec.MaxNcq),
 		Mqes:         int(in.NvmeController.Spec.Sqes),
@@ -190,12 +196,16 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	ctrlrID := autoCtrlrIDAllocation
+	if in.NvmeController.Spec.NvmeControllerId != nil {
+		ctrlrID = int(*in.NvmeController.Spec.NvmeControllerId)
+	}
 	params := models.MrvlNvmSubsysCreateCtrlrParams{
 		Subnqn:       subsys.Spec.Nqn,
 		PcieDomainID: int(in.NvmeController.Spec.PcieId.PortId),
 		PfID:         int(in.NvmeController.Spec.PcieId.PhysicalFunction),
 		VfID:         int(in.NvmeController.Spec.PcieId.VirtualFunction),
-		CtrlrID:      int(in.NvmeController.Spec.NvmeControllerId),
+		CtrlrID:      ctrlrID,
 		MaxNsq:       int(in.NvmeController.Spec.MaxNsq),
 		MaxNcq:       int(in.NvmeController.Spec.MaxNcq),
 		Mqes:         int(in.NvmeController.Spec.Sqes),
