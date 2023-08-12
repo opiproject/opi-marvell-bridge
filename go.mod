@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/opiproject/gospdk v0.0.0-20230731070525-a0690f165942
+	github.com/opiproject/gospdk v0.0.0-20230807070523-d5a06d9dc980
 	github.com/opiproject/opi-api v0.0.0-20230803153709-1e58d25ae2be
 	github.com/opiproject/opi-smbios-bridge v0.1.3-0.20230805042604-553cfde59973
 	github.com/opiproject/opi-spdk-bridge v0.1.2-0.20230805100532-d9af8e4fcaf1
