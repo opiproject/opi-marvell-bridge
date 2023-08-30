@@ -121,4 +121,9 @@ var (
 			PciOperState: 1,
 		},
 	}
+	checkGlobalTestProtoObjectsNotChanged = server.CheckTestProtoObjectsNotChanged(
+		&testSubsystem,
+		&testController,
+		&testNamespace,
+	)
 )
