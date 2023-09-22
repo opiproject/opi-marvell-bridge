@@ -19,17 +19,17 @@ import (
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
 func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 	spec := &pb.NvmeNamespaceSpec{
-		SubsystemNameRef: testSubsystemName,
-		HostNsid:         0,
-		VolumeNameRef:    "Malloc1",
-		Uuid:             &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
-		Nguid:            "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
-		Eui64:            1967554867335598546,
+		HostNsid:      0,
+		VolumeNameRef: "Malloc1",
+		Uuid:          &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+		Nguid:         "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
+		Eui64:         1967554867335598546,
 	}
 	t.Cleanup(server.CheckTestProtoObjectsNotChanged(spec)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
@@ -42,6 +42,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		exist   bool
+		subsys  string
 	}{
 		"illegal resource_id": {
 			id: "CapitalLettersNotAllowed",
@@ -53,6 +54,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
 			exist:   false,
+			subsys:  testSubsystemName,
 		},
 		"valid request with invalid SPDK response": {
 			id: testNamespaceID,
@@ -65,6 +67,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			errCode: codes.InvalidArgument,
 			errMsg:  fmt.Sprintf("Could not create NS: %v", testNamespaceName),
 			exist:   false,
+			subsys:  testSubsystemName,
 		},
 		"valid request with empty SPDK response": {
 			id: testNamespaceID,
@@ -77,6 +80,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("mrvl_nvm_subsys_alloc_ns: %v", "EOF"),
 			exist:   false,
+			subsys:  testSubsystemName,
 		},
 		"valid request with ID mismatch SPDK response": {
 			id: testNamespaceID,
@@ -89,6 +93,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("mrvl_nvm_subsys_alloc_ns: %v", "json response ID mismatch"),
 			exist:   false,
+			subsys:  testSubsystemName,
 		},
 		"valid request with error code from SPDK response": {
 			id: testNamespaceID,
@@ -101,29 +106,28 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("mrvl_nvm_subsys_alloc_ns: %v", "json response error: myopierr"),
 			exist:   false,
+			subsys:  testSubsystemName,
 		},
 		"valid request with valid SPDK response": {
 			id: testNamespaceID,
 			in: &pb.NvmeNamespace{
 				Name: testNamespaceName,
 				Spec: &pb.NvmeNamespaceSpec{
-					SubsystemNameRef: testSubsystemName,
-					HostNsid:         22,
-					VolumeNameRef:    "Malloc1",
-					Uuid:             &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
-					Nguid:            "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
-					Eui64:            1967554867335598546,
+					HostNsid:      22,
+					VolumeNameRef: "Malloc1",
+					Uuid:          &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+					Nguid:         "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
+					Eui64:         1967554867335598546,
 				},
 			},
 			out: &pb.NvmeNamespace{
 				Name: testNamespaceName,
 				Spec: &pb.NvmeNamespaceSpec{
-					SubsystemNameRef: testSubsystemName,
-					HostNsid:         22,
-					VolumeNameRef:    "Malloc1",
-					Uuid:             &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
-					Nguid:            "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
-					Eui64:            1967554867335598546,
+					HostNsid:      22,
+					VolumeNameRef: "Malloc1",
+					Uuid:          &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+					Nguid:         "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
+					Eui64:         1967554867335598546,
 				},
 				Status: &pb.NvmeNamespaceStatus{
 					PciState:     2,
@@ -134,6 +138,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			errCode: codes.OK,
 			errMsg:  "",
 			exist:   false,
+			subsys:  testSubsystemName,
 		},
 		"valid request with invalid SPDK second attach response": {
 			id: testNamespaceID,
@@ -146,6 +151,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			errCode: codes.InvalidArgument,
 			errMsg:  fmt.Sprintf("Could not attach NS: %v", testNamespaceName),
 			exist:   false,
+			subsys:  testSubsystemName,
 		},
 		"already exists": {
 			id: testNamespaceID,
@@ -158,13 +164,13 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			errCode: codes.OK,
 			errMsg:  "",
 			exist:   true,
+			subsys:  testSubsystemName,
 		},
 		"malformed subsystem name": {
 			id: testNamespaceID,
 			in: &pb.NvmeNamespace{
 				Spec: &pb.NvmeNamespaceSpec{
-					SubsystemNameRef: "-ABC-DEF",
-					VolumeNameRef:    "TBD",
+					VolumeNameRef: "TBD",
 				},
 			},
 			out:     nil,
@@ -172,6 +178,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
 			exist:   false,
+			subsys:  "-ABC-DEF",
 		},
 		"no required ns field": {
 			id:      testNamespaceID,
@@ -181,6 +188,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			errCode: codes.Unknown,
 			errMsg:  "missing required field: nvme_namespace",
 			exist:   false,
+			subsys:  testSubsystemName,
 		},
 		"no required subsystem field": {
 			id: testNamespaceID,
@@ -192,21 +200,21 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.Unknown,
-			errMsg:  "missing required field: nvme_namespace.spec.subsystem_name_ref",
+			errMsg:  "missing required field: parent",
 			exist:   false,
+			subsys:  "",
 		},
 		"no required volume field": {
 			id: testNamespaceID,
 			in: &pb.NvmeNamespace{
-				Spec: &pb.NvmeNamespaceSpec{
-					SubsystemNameRef: "TBD",
-				},
+				Spec: &pb.NvmeNamespaceSpec{},
 			},
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.Unknown,
 			errMsg:  "missing required field: nvme_namespace.spec.volume_name_ref",
 			exist:   false,
+			subsys:  testSubsystemName,
 		},
 	}
 
@@ -219,6 +227,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
 			testEnv.opiSpdkServer.Subsystems[testSubsystemName].Name = testSubsystemName
 			testEnv.opiSpdkServer.Controllers[testControllerName] = server.ProtoClone(&testController)
+			testEnv.opiSpdkServer.Controllers[testControllerName].Name = testControllerName
 			if tt.exist {
 				testEnv.opiSpdkServer.Namespaces[testNamespaceName] = server.ProtoClone(&testNamespace)
 				testEnv.opiSpdkServer.Namespaces[testNamespaceName].Name = testNamespaceName
@@ -228,7 +237,8 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 				tt.out.Name = testNamespaceName
 			}
 
-			request := &pb.CreateNvmeNamespaceRequest{NvmeNamespace: tt.in, NvmeNamespaceId: tt.id}
+			request := &pb.CreateNvmeNamespaceRequest{Parent: tt.subsys,
+				NvmeNamespace: tt.in, NvmeNamespaceId: tt.id}
 			response, err := testEnv.client.CreateNvmeNamespace(testEnv.ctx, request)
 
 			if !proto.Equal(response, tt.out) {
@@ -308,11 +318,11 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 			missing: false,
 		},
 		"valid request with unknown key": {
-			in:      server.ResourceIDToVolumeName("unknown-namespace-id"),
+			in:      frontend.ResourceIDToNamespaceName(testSubsystemID, "unknown-namespace-id"),
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-namespace-id")),
+			errMsg:  fmt.Sprintf("unable to find key %v", frontend.ResourceIDToNamespaceName(testSubsystemID, "unknown-namespace-id")),
 			missing: false,
 		},
 		"unknown key with missing allowed": {
@@ -348,8 +358,11 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName].Name = testSubsystemName
 			testEnv.opiSpdkServer.Controllers[testControllerName] = server.ProtoClone(&testController)
+			testEnv.opiSpdkServer.Controllers[testControllerName].Name = testControllerName
 			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = server.ProtoClone(&testNamespace)
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName].Name = testNamespaceName
 			request := &pb.DeleteNvmeNamespaceRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNvmeNamespace(testEnv.ctx, request)
 
@@ -406,13 +419,13 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 		"valid request with unknown key": {
 			mask: nil,
 			in: &pb.NvmeNamespace{
-				Name: server.ResourceIDToVolumeName("unknown-id"),
+				Name: frontend.ResourceIDToNamespaceName(testSubsystemID, "unknown-namespace-id"),
 				Spec: testNamespace.Spec,
 			},
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			errMsg:  fmt.Sprintf("unable to find key %v", frontend.ResourceIDToNamespaceName(testSubsystemID, "unknown-namespace-id")),
 		},
 		"malformed name": {
 			mask: nil,
@@ -434,8 +447,11 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName].Name = testSubsystemName
 			testEnv.opiSpdkServer.Controllers[testControllerName] = server.ProtoClone(&testController)
+			testEnv.opiSpdkServer.Controllers[testControllerName].Name = testControllerName
 			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = server.ProtoClone(&testNamespace)
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName].Name = testNamespaceName
 			request := &pb.UpdateNvmeNamespaceRequest{NvmeNamespace: tt.in, UpdateMask: tt.mask}
 			response, err := testEnv.client.UpdateNvmeNamespace(testEnv.ctx, request)
 
@@ -612,11 +628,11 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			token:   "",
 		},
 		"valid request with unknown key": {
-			in:      server.ResourceIDToVolumeName("unknown-namespace-id"),
+			in:      frontend.ResourceIDToNamespaceName(testSubsystemID, "unknown-namespace-id"),
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-namespace-id")),
+			errMsg:  fmt.Sprintf("unable to find key %v", frontend.ResourceIDToNamespaceName(testSubsystemID, "unknown-namespace-id")),
 			size:    0,
 			token:   "",
 		},
@@ -638,8 +654,11 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName].Name = testSubsystemName
 			testEnv.opiSpdkServer.Controllers[testControllerName] = server.ProtoClone(&testController)
+			testEnv.opiSpdkServer.Controllers[testControllerName].Name = testControllerName
 			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = server.ProtoClone(&testNamespace)
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName].Name = testNamespaceName
 			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
 
 			request := &pb.ListNvmeNamespacesRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
@@ -866,8 +885,11 @@ func TestFrontEnd_StatsNvmeNamespace(t *testing.T) {
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Subsystems[testSubsystemName].Name = testSubsystemName
 			testEnv.opiSpdkServer.Controllers[testControllerName] = server.ProtoClone(&testController)
+			testEnv.opiSpdkServer.Controllers[testControllerName].Name = testControllerName
 			testEnv.opiSpdkServer.Namespaces[testNamespaceName] = server.ProtoClone(&testNamespace)
+			testEnv.opiSpdkServer.Namespaces[testNamespaceName].Name = testNamespaceName
 
 			request := &pb.StatsNvmeNamespaceRequest{Name: tt.in}
 			response, err := testEnv.client.StatsNvmeNamespace(testEnv.ctx, request)
