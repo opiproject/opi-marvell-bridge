@@ -15,6 +15,7 @@ import (
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-marvell-bridge/pkg/models"
+	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"github.com/google/uuid"
@@ -49,7 +50,9 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeControllerId, in.NvmeController.Name)
 		resourceID = in.NvmeControllerId
 	}
-	in.NvmeController.Name = server.ResourceIDToVolumeName(resourceID)
+	in.NvmeController.Name = frontend.ResourceIDToControllerName(
+		frontend.GetSubsystemIDFromNvmeName(in.Parent), resourceID,
+	)
 	// idempotent API when called with same key, should return same object
 	controller, ok := s.Controllers[in.NvmeController.Name]
 	if ok {
@@ -57,9 +60,9 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 		return controller, nil
 	}
 	// not found, so create a new one
-	subsys, ok := s.Subsystems[in.NvmeController.Spec.SubsystemNameRef]
+	subsys, ok := s.Subsystems[in.Parent]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvmeController.Spec.SubsystemNameRef)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Parent)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -113,9 +116,12 @@ func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeContro
 		}
 		return nil, fmt.Errorf("error finding controller %s", in.Name)
 	}
-	subsys, ok := s.Subsystems[controller.Spec.SubsystemNameRef]
+	subsysName := frontend.ResourceIDToSubsystemName(
+		frontend.GetSubsystemIDFromNvmeName(in.Name),
+	)
+	subsys, ok := s.Subsystems[subsysName]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", controller.Spec.SubsystemNameRef)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", subsysName)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -166,9 +172,12 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 		return nil, err
 	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
-	subsys, ok := s.Subsystems[in.NvmeController.Spec.SubsystemNameRef]
+	subsysName := frontend.ResourceIDToSubsystemName(
+		frontend.GetSubsystemIDFromNvmeName(in.NvmeController.Name),
+	)
+	subsys, ok := s.Subsystems[subsysName]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvmeController.Spec.SubsystemNameRef)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", subsysName)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -269,9 +278,12 @@ func (s *Server) GetNvmeController(_ context.Context, in *pb.GetNvmeControllerRe
 	if !ok {
 		return nil, fmt.Errorf("error finding controller %s", in.Name)
 	}
-	subsys, ok := s.Subsystems[controller.Spec.SubsystemNameRef]
+	subsysName := frontend.ResourceIDToSubsystemName(
+		frontend.GetSubsystemIDFromNvmeName(in.Name),
+	)
+	subsys, ok := s.Subsystems[subsysName]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", controller.Spec.SubsystemNameRef)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", subsysName)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -309,9 +321,12 @@ func (s *Server) StatsNvmeController(_ context.Context, in *pb.StatsNvmeControll
 	if !ok {
 		return nil, fmt.Errorf("error finding controller %s", in.Name)
 	}
-	subsys, ok := s.Subsystems[controller.Spec.SubsystemNameRef]
+	subsysName := frontend.ResourceIDToSubsystemName(
+		frontend.GetSubsystemIDFromNvmeName(in.Name),
+	)
+	subsys, ok := s.Subsystems[subsysName]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", controller.Spec.SubsystemNameRef)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", subsysName)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
