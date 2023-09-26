@@ -21,7 +21,7 @@ import (
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
 type frontendClient struct {
@@ -39,8 +39,8 @@ type testEnv struct {
 }
 
 func (e *testEnv) Close() {
-	server.CloseListener(e.ln)
-	server.CloseGrpcConnection(e.conn)
+	utils.CloseListener(e.ln)
+	utils.CloseGrpcConnection(e.conn)
 	if err := os.RemoveAll(e.testSocket); err != nil {
 		log.Fatal(err)
 	}
@@ -48,8 +48,8 @@ func (e *testEnv) Close() {
 
 func createTestEnvironment(spdkResponses []string) *testEnv {
 	env := &testEnv{}
-	env.testSocket = server.GenerateSocketName("frontend")
-	env.ln, env.jsonRPC = server.CreateTestSpdkServer(env.testSocket, spdkResponses)
+	env.testSocket = utils.GenerateSocketName("frontend")
+	env.ln, env.jsonRPC = utils.CreateTestSpdkServer(env.testSocket, spdkResponses)
 	env.opiSpdkServer = NewServer(env.jsonRPC)
 
 	ctx := context.Background()
@@ -120,7 +120,7 @@ var (
 			PciOperState: 1,
 		},
 	}
-	checkGlobalTestProtoObjectsNotChanged = server.CheckTestProtoObjectsNotChanged(
+	checkGlobalTestProtoObjectsNotChanged = utils.CheckTestProtoObjectsNotChanged(
 		&testSubsystem,
 		&testController,
 		&testNamespace,

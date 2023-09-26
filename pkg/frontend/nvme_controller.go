@@ -16,7 +16,7 @@ import (
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-marvell-bridge/pkg/models"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
 	"github.com/google/uuid"
 	"go.einride.tech/aip/fieldbehavior"
@@ -93,7 +93,7 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	response := server.ProtoClone(in.NvmeController)
+	response := utils.ProtoClone(in.NvmeController)
 	response.Spec.NvmeControllerId = proto.Int32(int32(result.CtrlrID))
 	response.Status = &pb.NvmeControllerStatus{Active: true}
 	s.Controllers[in.NvmeController.Name] = response
@@ -207,7 +207,7 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	response := server.ProtoClone(in.NvmeController)
+	response := utils.ProtoClone(in.NvmeController)
 	response.Spec.NvmeControllerId = proto.Int32(int32(result.CtrlrID))
 	response.Status = &pb.NvmeControllerStatus{Active: true}
 	s.Controllers[in.NvmeController.Name] = response
@@ -223,7 +223,7 @@ func (s *Server) ListNvmeControllers(_ context.Context, in *pb.ListNvmeControlle
 		return nil, err
 	}
 	// fetch object from the database
-	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	size, offset, perr := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
 		log.Printf("error: %v", perr)
 		return nil, perr
@@ -251,7 +251,7 @@ func (s *Server) ListNvmeControllers(_ context.Context, in *pb.ListNvmeControlle
 	}
 	token, hasMoreElements := "", false
 	log.Printf("Limiting result len(%d) to [%d:%d]", len(result.CtrlrIDList), offset, size)
-	result.CtrlrIDList, hasMoreElements = server.LimitPagination(result.CtrlrIDList, offset, size)
+	result.CtrlrIDList, hasMoreElements = utils.LimitPagination(result.CtrlrIDList, offset, size)
 	if hasMoreElements {
 		token = uuid.New().String()
 		s.Pagination[token] = offset + size
