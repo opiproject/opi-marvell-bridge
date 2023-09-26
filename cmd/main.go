@@ -21,7 +21,7 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/backend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/middleend"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 	"github.com/opiproject/opi-strongswan-bridge/pkg/ipsec"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
@@ -71,13 +71,13 @@ func runGrpcServer(grpcPort int, spdkAddress string, tlsFiles string) {
 		log.Println("TLS files are not specified. Use insecure connection.")
 	} else {
 		log.Println("Use TLS certificate files:", tlsFiles)
-		config, err := server.ParseTLSFiles(tlsFiles)
+		config, err := utils.ParseTLSFiles(tlsFiles)
 		if err != nil {
 			log.Fatal("Failed to parse string with tls paths:", err)
 		}
 		log.Println("TLS config:", config)
 		var option grpc.ServerOption
-		if option, err = server.SetupTLSCredentials(config); err != nil {
+		if option, err = utils.SetupTLSCredentials(config); err != nil {
 			log.Fatal("Failed to setup TLS:", err)
 		}
 		serverOptions = append(serverOptions, option)
