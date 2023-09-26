@@ -21,7 +21,7 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/backend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/middleend"
-	"github.com/opiproject/opi-spdk-bridge/pkg/server"
+	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
 	"github.com/opiproject/opi-strongswan-bridge/pkg/ipsec"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"

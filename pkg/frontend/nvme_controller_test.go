@@ -20,7 +20,7 @@ import (
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
-	"github.com/opiproject/opi-spdk-bridge/pkg/server"
+	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
 func TestFrontEnd_CreateNvmeController(t *testing.T) {
