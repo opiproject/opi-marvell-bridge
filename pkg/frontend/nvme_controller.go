@@ -38,10 +38,8 @@ func sortNvmeControllers(controllers []*pb.NvmeController) {
 
 // CreateNvmeController creates an Nvme controller
 func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeControllerRequest) (*pb.NvmeController, error) {
-	log.Printf("CreateNvmeController: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateCreateNvmeControllerRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// see https://google.aip.dev/133#user-specified-ids
@@ -63,7 +61,6 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 	subsys, ok := s.Subsystems[in.Parent]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Parent)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 
@@ -84,13 +81,11 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 	var result models.MrvlNvmSubsysCreateCtrlrResult
 	err := s.rpc.Call("mrvl_nvm_subsys_create_ctrlr", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
 		msg := fmt.Sprintf("Could not create CTRL: %s", in.NvmeController.Name)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	response := utils.ProtoClone(in.NvmeController)
@@ -102,10 +97,8 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 
 // DeleteNvmeController deletes an Nvme controller
 func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeControllerRequest) (*emptypb.Empty, error) {
-	log.Printf("DeleteNvmeController: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateDeleteNvmeControllerRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
@@ -122,7 +115,6 @@ func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeContro
 	subsys, ok := s.Subsystems[subsysName]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", subsysName)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 
@@ -134,13 +126,11 @@ func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeContro
 	var result models.MrvlNvmSubsysRemoveCtrlrResult
 	err := s.rpc.Call("mrvl_nvm_subsys_remove_ctrlr", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
 		msg := fmt.Sprintf("Could not delete CTRL: %s", controller.Name)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	delete(s.Controllers, controller.Name)
@@ -149,10 +139,8 @@ func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeContro
 
 // UpdateNvmeController updates an Nvme controller
 func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeControllerRequest) (*pb.NvmeController, error) {
-	log.Printf("UpdateNvmeController: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateUpdateNvmeControllerRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
@@ -162,13 +150,11 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvmeController.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
 	// update_mask = 2
 	if err := fieldmask.Validate(in.UpdateMask, in.NvmeController); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
@@ -178,7 +164,6 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 	subsys, ok := s.Subsystems[subsysName]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", subsysName)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	ctrlrID := autoCtrlrIDAllocation
@@ -198,13 +183,11 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 	var result models.MrvlNvmSubsysCreateCtrlrResult
 	err := s.rpc.Call("mrvl_nvm_subsys_update_ctrlr", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
 		msg := fmt.Sprintf("Could not update CTRL: %s", in.NvmeController.Name)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	response := utils.ProtoClone(in.NvmeController)
@@ -216,22 +199,18 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 
 // ListNvmeControllers lists Nvme controllers
 func (s *Server) ListNvmeControllers(_ context.Context, in *pb.ListNvmeControllersRequest) (*pb.ListNvmeControllersResponse, error) {
-	log.Printf("ListNvmeControllers: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	size, offset, perr := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
-		log.Printf("error: %v", perr)
 		return nil, perr
 	}
 	subsys, ok := s.Subsystems[in.Parent]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Parent)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	params := models.MrvlNvmSubsysGetCtrlrListParams{
@@ -240,13 +219,11 @@ func (s *Server) ListNvmeControllers(_ context.Context, in *pb.ListNvmeControlle
 	var result models.MrvlNvmSubsysGetCtrlrListResult
 	err := s.rpc.Call("mrvl_nvm_subsys_get_ctrlr_list", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
 		msg := fmt.Sprintf("Could not list CTRLs: %v", in.Parent)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	token, hasMoreElements := "", false
@@ -267,10 +244,8 @@ func (s *Server) ListNvmeControllers(_ context.Context, in *pb.ListNvmeControlle
 
 // GetNvmeController gets an Nvme controller
 func (s *Server) GetNvmeController(_ context.Context, in *pb.GetNvmeControllerRequest) (*pb.NvmeController, error) {
-	log.Printf("GetNvmeController: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateGetNvmeControllerRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
@@ -284,7 +259,6 @@ func (s *Server) GetNvmeController(_ context.Context, in *pb.GetNvmeControllerRe
 	subsys, ok := s.Subsystems[subsysName]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", subsysName)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 
@@ -295,13 +269,11 @@ func (s *Server) GetNvmeController(_ context.Context, in *pb.GetNvmeControllerRe
 	var result models.MrvlNvmGetCtrlrInfoResult
 	err := s.rpc.Call("mrvl_nvm_ctrlr_get_info", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
 		msg := fmt.Sprintf("Could not get CTRL: %s", in.Name)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 
@@ -310,10 +282,8 @@ func (s *Server) GetNvmeController(_ context.Context, in *pb.GetNvmeControllerRe
 
 // StatsNvmeController gets an Nvme controller stats
 func (s *Server) StatsNvmeController(_ context.Context, in *pb.StatsNvmeControllerRequest) (*pb.StatsNvmeControllerResponse, error) {
-	log.Printf("StatsNvmeController: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateStatsNvmeControllerRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
@@ -327,7 +297,6 @@ func (s *Server) StatsNvmeController(_ context.Context, in *pb.StatsNvmeControll
 	subsys, ok := s.Subsystems[subsysName]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", subsysName)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 
@@ -338,13 +307,11 @@ func (s *Server) StatsNvmeController(_ context.Context, in *pb.StatsNvmeControll
 	var result models.MrvlNvmGetCtrlrStatsResult
 	err := s.rpc.Call("mrvl_nvm_get_ctrlr_stats", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
 		msg := fmt.Sprintf("Could not stats CTRL: %s", in.Name)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	return &pb.StatsNvmeControllerResponse{Stats: &pb.VolumeStats{

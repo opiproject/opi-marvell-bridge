@@ -36,10 +36,8 @@ func sortNvmeSubsystems(subsystems []*pb.NvmeSubsystem) {
 
 // CreateNvmeSubsystem creates an Nvme Subsystem
 func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsystemRequest) (*pb.NvmeSubsystem, error) {
-	log.Printf("CreateNvmeSubsystem: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateCreateNvmeSubsystemRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// see https://google.aip.dev/133#user-specified-ids
@@ -59,7 +57,6 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 	for _, item := range s.Subsystems {
 		if in.NvmeSubsystem.Spec.Nqn == item.Spec.Nqn {
 			msg := fmt.Sprintf("Could not create NQN: %s since object %s with same NQN already exists", in.NvmeSubsystem.Spec.Nqn, item.Name)
-			log.Print(msg)
 			return nil, status.Errorf(codes.AlreadyExists, msg)
 		}
 	}
@@ -77,19 +74,16 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 	var result models.MrvlNvmCreateSubsystemResult
 	err := s.rpc.Call("mrvl_nvm_create_subsystem", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
 		msg := fmt.Sprintf("Could not create NQN: %s", in.NvmeSubsystem.Spec.Nqn)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	var ver spdk.GetVersionResult
 	err = s.rpc.Call("spdk_get_version", nil, &ver)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", ver)
@@ -101,10 +95,8 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 
 // DeleteNvmeSubsystem deletes an Nvme Subsystem
 func (s *Server) DeleteNvmeSubsystem(_ context.Context, in *pb.DeleteNvmeSubsystemRequest) (*emptypb.Empty, error) {
-	log.Printf("DeleteNvmeSubsystem: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateDeleteNvmeSubsystemRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
@@ -114,7 +106,6 @@ func (s *Server) DeleteNvmeSubsystem(_ context.Context, in *pb.DeleteNvmeSubsyst
 			return &emptypb.Empty{}, nil
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	params := models.MrvlNvmDeleteSubsystemParams{
@@ -123,13 +114,11 @@ func (s *Server) DeleteNvmeSubsystem(_ context.Context, in *pb.DeleteNvmeSubsyst
 	var result models.MrvlNvmDeleteSubsystemResult
 	err := s.rpc.Call("mrvl_nvm_delete_subsystem", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
 		msg := fmt.Sprintf("Could not delete NQN: %s", subsys.Spec.Nqn)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	delete(s.Subsystems, subsys.Name)
@@ -138,10 +127,8 @@ func (s *Server) DeleteNvmeSubsystem(_ context.Context, in *pb.DeleteNvmeSubsyst
 
 // UpdateNvmeSubsystem updates an Nvme Subsystem
 func (s *Server) UpdateNvmeSubsystem(_ context.Context, in *pb.UpdateNvmeSubsystemRequest) (*pb.NvmeSubsystem, error) {
-	log.Printf("UpdateNvmeSubsystem: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateUpdateNvmeSubsystemRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
@@ -151,13 +138,11 @@ func (s *Server) UpdateNvmeSubsystem(_ context.Context, in *pb.UpdateNvmeSubsyst
 			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvmeSubsystem.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
 	// update_mask = 2
 	if err := fieldmask.Validate(in.UpdateMask, in.NvmeSubsystem); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
@@ -166,28 +151,23 @@ func (s *Server) UpdateNvmeSubsystem(_ context.Context, in *pb.UpdateNvmeSubsyst
 
 // ListNvmeSubsystems lists Nvme Subsystems
 func (s *Server) ListNvmeSubsystems(_ context.Context, in *pb.ListNvmeSubsystemsRequest) (*pb.ListNvmeSubsystemsResponse, error) {
-	log.Printf("ListNvmeSubsystems: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	size, offset, perr := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
-		log.Printf("error: %v", perr)
 		return nil, perr
 	}
 	var result models.MrvlNvmGetSubsysListResult
 	err := s.rpc.Call("mrvl_nvm_get_subsys_list", nil, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
 		msg := "Could not list subsystems"
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	token, hasMoreElements := "", false
@@ -208,30 +188,25 @@ func (s *Server) ListNvmeSubsystems(_ context.Context, in *pb.ListNvmeSubsystems
 
 // GetNvmeSubsystem gets Nvme Subsystems
 func (s *Server) GetNvmeSubsystem(_ context.Context, in *pb.GetNvmeSubsystemRequest) (*pb.NvmeSubsystem, error) {
-	log.Printf("GetNvmeSubsystem: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateGetNvmeSubsystemRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	subsys, ok := s.Subsystems[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// TODO: replace with MRVL code : mrvl_nvm_subsys_get_info ?
 	var result models.MrvlNvmGetSubsysListResult
 	err := s.rpc.Call("mrvl_nvm_get_subsys_list", nil, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
 		msg := fmt.Sprintf("Could not list NQN: %s", subsys.Spec.Nqn)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	for i := range result.SubsysList {
@@ -241,23 +216,19 @@ func (s *Server) GetNvmeSubsystem(_ context.Context, in *pb.GetNvmeSubsystemRequ
 		}
 	}
 	msg := fmt.Sprintf("Could not find NQN: %s", subsys.Spec.Nqn)
-	log.Print(msg)
 	return nil, status.Errorf(codes.InvalidArgument, msg)
 }
 
 // StatsNvmeSubsystem gets Nvme Subsystem stats
 func (s *Server) StatsNvmeSubsystem(_ context.Context, in *pb.StatsNvmeSubsystemRequest) (*pb.StatsNvmeSubsystemResponse, error) {
-	log.Printf("StatsNvmeSubsystem: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateStatsNvmeSubsystemRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	subsys, ok := s.Subsystems[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	params := models.MrvlNvmGetSubsysInfoParams{
@@ -266,13 +237,11 @@ func (s *Server) StatsNvmeSubsystem(_ context.Context, in *pb.StatsNvmeSubsystem
 	var result models.MrvlNvmGetSubsysInfoResult
 	err := s.rpc.Call("mrvl_nvm_subsys_get_info", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result.Status != 0 {
 		msg := fmt.Sprintf("Could not stats NQN: %s", subsys.Spec.Nqn)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	return &pb.StatsNvmeSubsystemResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
