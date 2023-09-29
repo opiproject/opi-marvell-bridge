@@ -35,6 +35,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 )
 
@@ -97,6 +98,16 @@ func runGrpcServer(grpcPort int, spdkAddress string, tlsFiles string, store gokv
 		}
 		serverOptions = append(serverOptions, option)
 	}
+	serverOptions = append(serverOptions, grpc.UnaryInterceptor(
+		logging.UnaryServerInterceptor(utils.InterceptorLogger(log.Default()),
+			logging.WithLogOnEvents(
+				logging.StartCall,
+				logging.FinishCall,
+				logging.PayloadReceived,
+				logging.PayloadSent,
+			),
+		)),
+	)
 	s := grpc.NewServer(serverOptions...)
 
 	pb.RegisterFrontendNvmeServiceServer(s, frontendOpiMarvellServer)
