@@ -99,6 +99,14 @@ var (
 			Nqn: "nqn.2022-09.io.spdk:opi3",
 		},
 	}
+	testSubsystemWithStatus = pb.NvmeSubsystem{
+		Name: testSubsystemName,
+		Spec: testSubsystem.Spec,
+		Status: &pb.NvmeSubsystemStatus{
+			FirmwareRevision: "TBD",
+		},
+	}
+
 	testControllerID   = "controller-test"
 	testControllerName = frontend.ResourceIDToControllerName(testSubsystemID, testControllerID)
 	testController     = pb.NvmeController{
@@ -112,10 +120,15 @@ var (
 			Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
 			NvmeControllerId: proto.Int32(17),
 		},
+	}
+	testControllerWithStatus = pb.NvmeController{
+		Name: testControllerName,
+		Spec: testController.Spec,
 		Status: &pb.NvmeControllerStatus{
 			Active: true,
 		},
 	}
+
 	testNamespaceID   = "namespace-test"
 	testNamespaceName = frontend.ResourceIDToNamespaceName(testSubsystemID, testNamespaceID)
 	testNamespace     = pb.NvmeNamespace{
@@ -123,14 +136,22 @@ var (
 			HostNsid:      22,
 			VolumeNameRef: "Malloc0",
 		},
+	}
+	testNamespaceWithStatus = pb.NvmeNamespace{
+		Name: testNamespaceName,
+		Spec: testNamespace.Spec,
 		Status: &pb.NvmeNamespaceStatus{
 			PciState:     2,
 			PciOperState: 1,
 		},
 	}
+
 	checkGlobalTestProtoObjectsNotChanged = utils.CheckTestProtoObjectsNotChanged(
 		&testSubsystem,
 		&testController,
 		&testNamespace,
+		&testSubsystemWithStatus,
+		&testControllerWithStatus,
+		&testNamespaceWithStatus,
 	)
 )
