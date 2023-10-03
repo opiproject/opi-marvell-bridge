@@ -70,13 +70,13 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 	}
 	params := models.MrvlNvmSubsysCreateCtrlrParams{
 		Subnqn:       subsys.Spec.Nqn,
-		PcieDomainID: int(in.NvmeController.Spec.PcieId.PortId.Value),
-		PfID:         int(in.NvmeController.Spec.PcieId.PhysicalFunction.Value),
-		VfID:         int(in.NvmeController.Spec.PcieId.VirtualFunction.Value),
+		PcieDomainID: int(in.GetNvmeController().GetSpec().GetPcieId().GetPortId().GetValue()),
+		PfID:         int(in.GetNvmeController().GetSpec().GetPcieId().GetPhysicalFunction().GetValue()),
+		VfID:         int(in.GetNvmeController().GetSpec().GetPcieId().GetVirtualFunction().GetValue()),
 		CtrlrID:      ctrlrID,
-		MaxNsq:       int(in.NvmeController.Spec.MaxNsq),
-		MaxNcq:       int(in.NvmeController.Spec.MaxNcq),
-		Mqes:         int(in.NvmeController.Spec.Sqes),
+		MaxNsq:       int(in.GetNvmeController().GetSpec().GetMaxNsq()),
+		MaxNcq:       int(in.GetNvmeController().GetSpec().GetMaxNcq()),
+		Mqes:         int(in.GetNvmeController().GetSpec().GetSqes()),
 	}
 	var result models.MrvlNvmSubsysCreateCtrlrResult
 	err := s.rpc.Call("mrvl_nvm_subsys_create_ctrlr", &params, &result)
@@ -172,13 +172,13 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 	}
 	params := models.MrvlNvmSubsysCreateCtrlrParams{
 		Subnqn:       subsys.Spec.Nqn,
-		PcieDomainID: int(in.NvmeController.Spec.PcieId.PortId.Value),
-		PfID:         int(in.NvmeController.Spec.PcieId.PhysicalFunction.Value),
-		VfID:         int(in.NvmeController.Spec.PcieId.VirtualFunction.Value),
+		PcieDomainID: int(in.GetNvmeController().GetSpec().GetPcieId().GetPortId().GetValue()),
+		PfID:         int(in.GetNvmeController().GetSpec().GetPcieId().GetPhysicalFunction().GetValue()),
+		VfID:         int(in.GetNvmeController().GetSpec().GetPcieId().GetVirtualFunction().GetValue()),
 		CtrlrID:      ctrlrID,
-		MaxNsq:       int(in.NvmeController.Spec.MaxNsq),
-		MaxNcq:       int(in.NvmeController.Spec.MaxNcq),
-		Mqes:         int(in.NvmeController.Spec.Sqes),
+		MaxNsq:       int(in.GetNvmeController().GetSpec().GetMaxNsq()),
+		MaxNcq:       int(in.GetNvmeController().GetSpec().GetMaxNcq()),
+		Mqes:         int(in.GetNvmeController().GetSpec().GetSqes()),
 	}
 	var result models.MrvlNvmSubsysCreateCtrlrResult
 	err := s.rpc.Call("mrvl_nvm_subsys_update_ctrlr", &params, &result)
