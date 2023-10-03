@@ -47,8 +47,12 @@ func (s *Server) CreateNvmeSubsystem(ctx context.Context, in *pb.CreateNvmeSubsy
 	}
 	in.NvmeSubsystem.Name = utils.ResourceIDToSubsystemName(resourceID)
 	// idempotent API when called with same key, should return same object
-	subsys, ok := s.Subsystems[in.NvmeSubsystem.Name]
-	if ok {
+	subsys := new(pb.NvmeSubsystem)
+	found, err := s.store.Get(in.NvmeSubsystem.Name, subsys)
+	if err != nil {
+		return nil, err
+	}
+	if found {
 		log.Printf("Already existing NvmeSubsystem with id %v", in.NvmeSubsystem.Name)
 		return subsys, nil
 	}
@@ -71,7 +75,7 @@ func (s *Server) CreateNvmeSubsystem(ctx context.Context, in *pb.CreateNvmeSubsy
 		MaxCtrlrID:    256,
 	}
 	var result models.MrvlNvmCreateSubsystemResult
-	err := s.rpc.Call(ctx, "mrvl_nvm_create_subsystem", &params, &result)
+	err = s.rpc.Call(ctx, "mrvl_nvm_create_subsystem", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +92,10 @@ func (s *Server) CreateNvmeSubsystem(ctx context.Context, in *pb.CreateNvmeSubsy
 	log.Printf("Received from SPDK: %v", ver)
 	response := utils.ProtoClone(in.NvmeSubsystem)
 	response.Status = &pb.NvmeSubsystemStatus{FirmwareRevision: ver.Version}
-	s.Subsystems[in.NvmeSubsystem.Name] = response
+	err = s.store.Set(in.NvmeSubsystem.Name, response)
+	if err != nil {
+		return nil, err
+	}
 	return response, nil
 }
 
@@ -99,8 +106,12 @@ func (s *Server) DeleteNvmeSubsystem(ctx context.Context, in *pb.DeleteNvmeSubsy
 		return nil, err
 	}
 	// fetch object from the database
-	subsys, ok := s.Subsystems[in.Name]
-	if !ok {
+	subsys := new(pb.NvmeSubsystem)
+	found, err := s.store.Get(in.Name, subsys)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		if in.AllowMissing {
 			return &emptypb.Empty{}, nil
 		}
@@ -111,7 +122,7 @@ func (s *Server) DeleteNvmeSubsystem(ctx context.Context, in *pb.DeleteNvmeSubsy
 		Subnqn: subsys.Spec.Nqn,
 	}
 	var result models.MrvlNvmDeleteSubsystemResult
-	err := s.rpc.Call(ctx, "mrvl_nvm_delete_subsystem", &params, &result)
+	err = s.rpc.Call(ctx, "mrvl_nvm_delete_subsystem", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +131,11 @@ func (s *Server) DeleteNvmeSubsystem(ctx context.Context, in *pb.DeleteNvmeSubsy
 		msg := fmt.Sprintf("Could not delete NQN: %s", subsys.Spec.Nqn)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	delete(s.Subsystems, subsys.Name)
+	// remove from the Database
+	err = s.store.Delete(subsys.Name)
+	if err != nil {
+		return nil, err
+	}
 	return &emptypb.Empty{}, nil
 }
 
@@ -131,15 +146,19 @@ func (s *Server) UpdateNvmeSubsystem(_ context.Context, in *pb.UpdateNvmeSubsyst
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Subsystems[in.NvmeSubsystem.Name]
-	if !ok {
+	subsys := new(pb.NvmeSubsystem)
+	found, err := s.store.Get(in.NvmeSubsystem.Name, subsys)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		if in.AllowMissing {
 			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvmeSubsystem.Name)
 		return nil, err
 	}
-	resourceID := path.Base(volume.Name)
+	resourceID := path.Base(subsys.Name)
 	// update_mask = 2
 	if err := fieldmask.Validate(in.UpdateMask, in.NvmeSubsystem); err != nil {
 		return nil, err
@@ -192,14 +211,18 @@ func (s *Server) GetNvmeSubsystem(ctx context.Context, in *pb.GetNvmeSubsystemRe
 		return nil, err
 	}
 	// fetch object from the database
-	subsys, ok := s.Subsystems[in.Name]
-	if !ok {
+	subsys := new(pb.NvmeSubsystem)
+	found, err := s.store.Get(in.Name, subsys)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		return nil, err
 	}
 	// TODO: replace with MRVL code : mrvl_nvm_subsys_get_info ?
 	var result models.MrvlNvmGetSubsysListResult
-	err := s.rpc.Call(ctx, "mrvl_nvm_get_subsys_list", nil, &result)
+	err = s.rpc.Call(ctx, "mrvl_nvm_get_subsys_list", nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -225,8 +248,12 @@ func (s *Server) StatsNvmeSubsystem(ctx context.Context, in *pb.StatsNvmeSubsyst
 		return nil, err
 	}
 	// fetch object from the database
-	subsys, ok := s.Subsystems[in.Name]
-	if !ok {
+	subsys := new(pb.NvmeSubsystem)
+	found, err := s.store.Get(in.Name, subsys)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		return nil, err
 	}
@@ -234,7 +261,7 @@ func (s *Server) StatsNvmeSubsystem(ctx context.Context, in *pb.StatsNvmeSubsyst
 		Subnqn: subsys.Spec.Nqn,
 	}
 	var result models.MrvlNvmGetSubsysInfoResult
-	err := s.rpc.Call(ctx, "mrvl_nvm_subsys_get_info", &params, &result)
+	err = s.rpc.Call(ctx, "mrvl_nvm_subsys_get_info", &params, &result)
 	if err != nil {
 		return nil, err
 	}

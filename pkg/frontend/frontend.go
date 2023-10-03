@@ -18,12 +18,9 @@ import (
 // Server contains frontend related OPI services
 type Server struct {
 	pb.UnimplementedFrontendNvmeServiceServer
-	Subsystems  map[string]*pb.NvmeSubsystem
-	Controllers map[string]*pb.NvmeController
-	Namespaces  map[string]*pb.NvmeNamespace
-	Pagination  map[string]int
-	store       gokv.Store
-	rpc         spdk.JSONRPC
+	Pagination map[string]int
+	store      gokv.Store
+	rpc        spdk.JSONRPC
 }
 
 // NewServer creates initialized instance of Nvme server
@@ -35,11 +32,8 @@ func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
 		log.Panic("nil for Store is not allowed")
 	}
 	return &Server{
-		Subsystems:  make(map[string]*pb.NvmeSubsystem),
-		Controllers: make(map[string]*pb.NvmeController),
-		Namespaces:  make(map[string]*pb.NvmeNamespace),
-		Pagination:  make(map[string]int),
-		store:       store,
-		rpc:         jsonRPC,
+		Pagination: make(map[string]int),
+		store:      store,
+		rpc:        jsonRPC,
 	}
 }
