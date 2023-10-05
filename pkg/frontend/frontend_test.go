@@ -22,7 +22,6 @@ import (
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
@@ -93,7 +92,7 @@ func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, erro
 
 var (
 	testSubsystemID   = "subsystem-test"
-	testSubsystemName = frontend.ResourceIDToSubsystemName(testSubsystemID)
+	testSubsystemName = utils.ResourceIDToSubsystemName(testSubsystemID)
 	testSubsystem     = pb.NvmeSubsystem{
 		Spec: &pb.NvmeSubsystemSpec{
 			Nqn: "nqn.2022-09.io.spdk:opi3",
@@ -108,7 +107,7 @@ var (
 	}
 
 	testControllerID   = "controller-test"
-	testControllerName = frontend.ResourceIDToControllerName(testSubsystemID, testControllerID)
+	testControllerName = utils.ResourceIDToControllerName(testSubsystemID, testControllerID)
 	testController     = pb.NvmeController{
 		Spec: &pb.NvmeControllerSpec{
 			Endpoint: &pb.NvmeControllerSpec_PcieId{
@@ -130,7 +129,7 @@ var (
 	}
 
 	testNamespaceID   = "namespace-test"
-	testNamespaceName = frontend.ResourceIDToNamespaceName(testSubsystemID, testNamespaceID)
+	testNamespaceName = utils.ResourceIDToNamespaceName(testSubsystemID, testNamespaceID)
 	testNamespace     = pb.NvmeNamespace{
 		Spec: &pb.NvmeNamespaceSpec{
 			HostNsid:      22,
