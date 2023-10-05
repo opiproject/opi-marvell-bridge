@@ -15,7 +15,6 @@ import (
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-marvell-bridge/pkg/models"
-	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
 	"github.com/google/uuid"
@@ -48,8 +47,8 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeControllerId, in.NvmeController.Name)
 		resourceID = in.NvmeControllerId
 	}
-	in.NvmeController.Name = frontend.ResourceIDToControllerName(
-		frontend.GetSubsystemIDFromNvmeName(in.Parent), resourceID,
+	in.NvmeController.Name = utils.ResourceIDToControllerName(
+		utils.GetSubsystemIDFromNvmeName(in.Parent), resourceID,
 	)
 	// idempotent API when called with same key, should return same object
 	controller, ok := s.Controllers[in.NvmeController.Name]
@@ -109,8 +108,8 @@ func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeContro
 		}
 		return nil, fmt.Errorf("error finding controller %s", in.Name)
 	}
-	subsysName := frontend.ResourceIDToSubsystemName(
-		frontend.GetSubsystemIDFromNvmeName(in.Name),
+	subsysName := utils.ResourceIDToSubsystemName(
+		utils.GetSubsystemIDFromNvmeName(in.Name),
 	)
 	subsys, ok := s.Subsystems[subsysName]
 	if !ok {
@@ -158,8 +157,8 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 		return nil, err
 	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
-	subsysName := frontend.ResourceIDToSubsystemName(
-		frontend.GetSubsystemIDFromNvmeName(in.NvmeController.Name),
+	subsysName := utils.ResourceIDToSubsystemName(
+		utils.GetSubsystemIDFromNvmeName(in.NvmeController.Name),
 	)
 	subsys, ok := s.Subsystems[subsysName]
 	if !ok {
@@ -253,8 +252,8 @@ func (s *Server) GetNvmeController(_ context.Context, in *pb.GetNvmeControllerRe
 	if !ok {
 		return nil, fmt.Errorf("error finding controller %s", in.Name)
 	}
-	subsysName := frontend.ResourceIDToSubsystemName(
-		frontend.GetSubsystemIDFromNvmeName(in.Name),
+	subsysName := utils.ResourceIDToSubsystemName(
+		utils.GetSubsystemIDFromNvmeName(in.Name),
 	)
 	subsys, ok := s.Subsystems[subsysName]
 	if !ok {
@@ -291,8 +290,8 @@ func (s *Server) StatsNvmeController(_ context.Context, in *pb.StatsNvmeControll
 	if !ok {
 		return nil, fmt.Errorf("error finding controller %s", in.Name)
 	}
-	subsysName := frontend.ResourceIDToSubsystemName(
-		frontend.GetSubsystemIDFromNvmeName(in.Name),
+	subsysName := utils.ResourceIDToSubsystemName(
+		utils.GetSubsystemIDFromNvmeName(in.Name),
 	)
 	subsys, ok := s.Subsystems[subsysName]
 	if !ok {

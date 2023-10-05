@@ -16,7 +16,6 @@ import (
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-marvell-bridge/pkg/models"
-	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
 	"github.com/google/uuid"
@@ -46,8 +45,8 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeNamespaceId, in.NvmeNamespace.Name)
 		resourceID = in.NvmeNamespaceId
 	}
-	in.NvmeNamespace.Name = frontend.ResourceIDToNamespaceName(
-		frontend.GetSubsystemIDFromNvmeName(in.Parent), resourceID,
+	in.NvmeNamespace.Name = utils.ResourceIDToNamespaceName(
+		utils.GetSubsystemIDFromNvmeName(in.Parent), resourceID,
 	)
 	// idempotent API when called with same key, should return same object
 	namespace, ok := s.Namespaces[in.NvmeNamespace.Name]
@@ -82,7 +81,7 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 	}
 	// Now, attach this new NS to ALL controllers
 	for _, c := range s.Controllers {
-		if frontend.GetSubsystemIDFromNvmeName(c.Name) != frontend.GetSubsystemIDFromNvmeName(in.Parent) {
+		if utils.GetSubsystemIDFromNvmeName(c.Name) != utils.GetSubsystemIDFromNvmeName(in.Parent) {
 			continue
 		}
 		params := models.MrvlNvmCtrlrAttachNsParams{
@@ -121,8 +120,8 @@ func (s *Server) DeleteNvmeNamespace(_ context.Context, in *pb.DeleteNvmeNamespa
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		return nil, err
 	}
-	subsysName := frontend.ResourceIDToSubsystemName(
-		frontend.GetSubsystemIDFromNvmeName(in.Name),
+	subsysName := utils.ResourceIDToSubsystemName(
+		utils.GetSubsystemIDFromNvmeName(in.Name),
 	)
 	subsys, ok := s.Subsystems[subsysName]
 	if !ok {
@@ -131,7 +130,7 @@ func (s *Server) DeleteNvmeNamespace(_ context.Context, in *pb.DeleteNvmeNamespa
 	}
 	// First, detach this NS from ALL controllers
 	for _, c := range s.Controllers {
-		if frontend.GetSubsystemIDFromNvmeName(c.Name) != frontend.GetSubsystemIDFromNvmeName(in.Name) {
+		if utils.GetSubsystemIDFromNvmeName(c.Name) != utils.GetSubsystemIDFromNvmeName(in.Name) {
 			continue
 		}
 		params := models.MrvlNvmCtrlrDetachNsParams{
@@ -250,8 +249,8 @@ func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequ
 		return nil, err
 	}
 	log.Printf("namespace: %v", namespace)
-	subsysName := frontend.ResourceIDToSubsystemName(
-		frontend.GetSubsystemIDFromNvmeName(in.Name),
+	subsysName := utils.ResourceIDToSubsystemName(
+		utils.GetSubsystemIDFromNvmeName(in.Name),
 	)
 	subsys, ok := s.Subsystems[subsysName]
 	if !ok {
@@ -288,8 +287,8 @@ func (s *Server) StatsNvmeNamespace(_ context.Context, in *pb.StatsNvmeNamespace
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		return nil, err
 	}
-	subsysName := frontend.ResourceIDToSubsystemName(
-		frontend.GetSubsystemIDFromNvmeName(in.Name),
+	subsysName := utils.ResourceIDToSubsystemName(
+		utils.GetSubsystemIDFromNvmeName(in.Name),
 	)
 	subsys, ok := s.Subsystems[subsysName]
 	if !ok {
