@@ -34,7 +34,7 @@ func sortNvmeNamespaces(namespaces []*pb.NvmeNamespace) {
 }
 
 // CreateNvmeNamespace creates an Nvme namespace
-func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
+func (s *Server) CreateNvmeNamespace(ctx context.Context, in *pb.CreateNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
 	// check input correctness
 	if err := s.validateCreateNvmeNamespaceRequest(in); err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 		Bdev:        in.NvmeNamespace.Spec.VolumeNameRef,
 	}
 	var result models.MrvlNvmSubsysAllocNsResult
-	err := s.rpc.Call("mrvl_nvm_subsys_alloc_ns", &params, &result)
+	err := s.rpc.Call(ctx, "mrvl_nvm_subsys_alloc_ns", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 			NsInstanceID: int(in.NvmeNamespace.Spec.HostNsid),
 		}
 		var result models.MrvlNvmCtrlrAttachNsResult
-		err := s.rpc.Call("mrvl_nvm_ctrlr_attach_ns", &params, &result)
+		err := s.rpc.Call(ctx, "mrvl_nvm_ctrlr_attach_ns", &params, &result)
 		if err != nil {
 			return nil, err
 		}
@@ -106,7 +106,7 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 }
 
 // DeleteNvmeNamespace deletes an Nvme namespace
-func (s *Server) DeleteNvmeNamespace(_ context.Context, in *pb.DeleteNvmeNamespaceRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteNvmeNamespace(ctx context.Context, in *pb.DeleteNvmeNamespaceRequest) (*emptypb.Empty, error) {
 	// check input correctness
 	if err := s.validateDeleteNvmeNamespaceRequest(in); err != nil {
 		return nil, err
@@ -139,7 +139,7 @@ func (s *Server) DeleteNvmeNamespace(_ context.Context, in *pb.DeleteNvmeNamespa
 			NsInstanceID: int(namespace.Spec.HostNsid),
 		}
 		var result models.MrvlNvmCtrlrDetachNsResult
-		err := s.rpc.Call("mrvl_nvm_ctrlr_detach_ns", &params, &result)
+		err := s.rpc.Call(ctx, "mrvl_nvm_ctrlr_detach_ns", &params, &result)
 		if err != nil {
 			return nil, err
 		}
@@ -154,7 +154,7 @@ func (s *Server) DeleteNvmeNamespace(_ context.Context, in *pb.DeleteNvmeNamespa
 		NsInstanceID: int(namespace.Spec.HostNsid),
 	}
 	var result models.MrvlNvmSubsysUnallocNsResult
-	err := s.rpc.Call("mrvl_nvm_subsys_unalloc_ns", &params, &result)
+	err := s.rpc.Call(ctx, "mrvl_nvm_subsys_unalloc_ns", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +192,7 @@ func (s *Server) UpdateNvmeNamespace(_ context.Context, in *pb.UpdateNvmeNamespa
 }
 
 // ListNvmeNamespaces lists Nvme namespaces
-func (s *Server) ListNvmeNamespaces(_ context.Context, in *pb.ListNvmeNamespacesRequest) (*pb.ListNvmeNamespacesResponse, error) {
+func (s *Server) ListNvmeNamespaces(ctx context.Context, in *pb.ListNvmeNamespacesRequest) (*pb.ListNvmeNamespacesResponse, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -211,7 +211,7 @@ func (s *Server) ListNvmeNamespaces(_ context.Context, in *pb.ListNvmeNamespaces
 		Subnqn: subsys.Spec.Nqn,
 	}
 	var result models.MrvlNvmSubsysGetNsListResult
-	err := s.rpc.Call("mrvl_nvm_subsys_get_ns_list", &params, &result)
+	err := s.rpc.Call(ctx, "mrvl_nvm_subsys_get_ns_list", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +237,7 @@ func (s *Server) ListNvmeNamespaces(_ context.Context, in *pb.ListNvmeNamespaces
 }
 
 // GetNvmeNamespace gets an Nvme namespace
-func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
+func (s *Server) GetNvmeNamespace(ctx context.Context, in *pb.GetNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
 	// check input correctness
 	if err := s.validateGetNvmeNamespaceRequest(in); err != nil {
 		return nil, err
@@ -263,7 +263,7 @@ func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequ
 		NsInstanceID: int(namespace.Spec.HostNsid),
 	}
 	var result models.MrvlNvmGetNsInfoResult
-	err := s.rpc.Call("mrvl_nvm_ns_get_info", &params, &result)
+	err := s.rpc.Call(ctx, "mrvl_nvm_ns_get_info", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +276,7 @@ func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequ
 }
 
 // StatsNvmeNamespace gets an Nvme namespace stats
-func (s *Server) StatsNvmeNamespace(_ context.Context, in *pb.StatsNvmeNamespaceRequest) (*pb.StatsNvmeNamespaceResponse, error) {
+func (s *Server) StatsNvmeNamespace(ctx context.Context, in *pb.StatsNvmeNamespaceRequest) (*pb.StatsNvmeNamespaceResponse, error) {
 	// check input correctness
 	if err := s.validateStatsNvmeNamespaceRequest(in); err != nil {
 		return nil, err
@@ -301,7 +301,7 @@ func (s *Server) StatsNvmeNamespace(_ context.Context, in *pb.StatsNvmeNamespace
 		NsInstanceID: int(namespace.Spec.HostNsid),
 	}
 	var result models.MrvlNvmGetNsStatsResult
-	err := s.rpc.Call("mrvl_nvm_get_ns_stats", &params, &result)
+	err := s.rpc.Call(ctx, "mrvl_nvm_get_ns_stats", &params, &result)
 	if err != nil {
 		return nil, err
 	}

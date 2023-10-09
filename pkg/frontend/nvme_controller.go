@@ -36,7 +36,7 @@ func sortNvmeControllers(controllers []*pb.NvmeController) {
 }
 
 // CreateNvmeController creates an Nvme controller
-func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeControllerRequest) (*pb.NvmeController, error) {
+func (s *Server) CreateNvmeController(ctx context.Context, in *pb.CreateNvmeControllerRequest) (*pb.NvmeController, error) {
 	// check input correctness
 	if err := s.validateCreateNvmeControllerRequest(in); err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 		Mqes:         int(in.GetNvmeController().GetSpec().GetSqes()),
 	}
 	var result models.MrvlNvmSubsysCreateCtrlrResult
-	err := s.rpc.Call("mrvl_nvm_subsys_create_ctrlr", &params, &result)
+	err := s.rpc.Call(ctx, "mrvl_nvm_subsys_create_ctrlr", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 }
 
 // DeleteNvmeController deletes an Nvme controller
-func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeControllerRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteNvmeController(ctx context.Context, in *pb.DeleteNvmeControllerRequest) (*emptypb.Empty, error) {
 	// check input correctness
 	if err := s.validateDeleteNvmeControllerRequest(in); err != nil {
 		return nil, err
@@ -123,7 +123,7 @@ func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeContro
 		Force:   1,
 	}
 	var result models.MrvlNvmSubsysRemoveCtrlrResult
-	err := s.rpc.Call("mrvl_nvm_subsys_remove_ctrlr", &params, &result)
+	err := s.rpc.Call(ctx, "mrvl_nvm_subsys_remove_ctrlr", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeContro
 }
 
 // UpdateNvmeController updates an Nvme controller
-func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeControllerRequest) (*pb.NvmeController, error) {
+func (s *Server) UpdateNvmeController(ctx context.Context, in *pb.UpdateNvmeControllerRequest) (*pb.NvmeController, error) {
 	// check input correctness
 	if err := s.validateUpdateNvmeControllerRequest(in); err != nil {
 		return nil, err
@@ -180,7 +180,7 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 		Mqes:         int(in.GetNvmeController().GetSpec().GetSqes()),
 	}
 	var result models.MrvlNvmSubsysCreateCtrlrResult
-	err := s.rpc.Call("mrvl_nvm_subsys_update_ctrlr", &params, &result)
+	err := s.rpc.Call(ctx, "mrvl_nvm_subsys_update_ctrlr", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +197,7 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 }
 
 // ListNvmeControllers lists Nvme controllers
-func (s *Server) ListNvmeControllers(_ context.Context, in *pb.ListNvmeControllersRequest) (*pb.ListNvmeControllersResponse, error) {
+func (s *Server) ListNvmeControllers(ctx context.Context, in *pb.ListNvmeControllersRequest) (*pb.ListNvmeControllersResponse, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -216,7 +216,7 @@ func (s *Server) ListNvmeControllers(_ context.Context, in *pb.ListNvmeControlle
 		Subnqn: subsys.Spec.Nqn,
 	}
 	var result models.MrvlNvmSubsysGetCtrlrListResult
-	err := s.rpc.Call("mrvl_nvm_subsys_get_ctrlr_list", &params, &result)
+	err := s.rpc.Call(ctx, "mrvl_nvm_subsys_get_ctrlr_list", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -242,7 +242,7 @@ func (s *Server) ListNvmeControllers(_ context.Context, in *pb.ListNvmeControlle
 }
 
 // GetNvmeController gets an Nvme controller
-func (s *Server) GetNvmeController(_ context.Context, in *pb.GetNvmeControllerRequest) (*pb.NvmeController, error) {
+func (s *Server) GetNvmeController(ctx context.Context, in *pb.GetNvmeControllerRequest) (*pb.NvmeController, error) {
 	// check input correctness
 	if err := s.validateGetNvmeControllerRequest(in); err != nil {
 		return nil, err
@@ -266,7 +266,7 @@ func (s *Server) GetNvmeController(_ context.Context, in *pb.GetNvmeControllerRe
 		CtrlrID: int(*controller.Spec.NvmeControllerId),
 	}
 	var result models.MrvlNvmGetCtrlrInfoResult
-	err := s.rpc.Call("mrvl_nvm_ctrlr_get_info", &params, &result)
+	err := s.rpc.Call(ctx, "mrvl_nvm_ctrlr_get_info", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +280,7 @@ func (s *Server) GetNvmeController(_ context.Context, in *pb.GetNvmeControllerRe
 }
 
 // StatsNvmeController gets an Nvme controller stats
-func (s *Server) StatsNvmeController(_ context.Context, in *pb.StatsNvmeControllerRequest) (*pb.StatsNvmeControllerResponse, error) {
+func (s *Server) StatsNvmeController(ctx context.Context, in *pb.StatsNvmeControllerRequest) (*pb.StatsNvmeControllerResponse, error) {
 	// check input correctness
 	if err := s.validateStatsNvmeControllerRequest(in); err != nil {
 		return nil, err
@@ -304,7 +304,7 @@ func (s *Server) StatsNvmeController(_ context.Context, in *pb.StatsNvmeControll
 		CtrlrID: int(*controller.Spec.NvmeControllerId),
 	}
 	var result models.MrvlNvmGetCtrlrStatsResult
-	err := s.rpc.Call("mrvl_nvm_get_ctrlr_stats", &params, &result)
+	err := s.rpc.Call(ctx, "mrvl_nvm_get_ctrlr_stats", &params, &result)
 	if err != nil {
 		return nil, err
 	}
