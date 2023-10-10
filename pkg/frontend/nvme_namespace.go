@@ -100,7 +100,10 @@ func (s *Server) CreateNvmeNamespace(ctx context.Context, in *pb.CreateNvmeNames
 		}
 	}
 	response := utils.ProtoClone(in.NvmeNamespace)
-	response.Status = &pb.NvmeNamespaceStatus{PciState: 2, PciOperState: 1}
+	response.Status = &pb.NvmeNamespaceStatus{
+		State:     pb.NvmeNamespaceStatus_STATE_ENABLED,
+		OperState: pb.NvmeNamespaceStatus_OPER_STATE_ONLINE,
+	}
 	s.Namespaces[in.NvmeNamespace.Name] = response
 	return response, nil
 }
@@ -272,7 +275,15 @@ func (s *Server) GetNvmeNamespace(ctx context.Context, in *pb.GetNvmeNamespaceRe
 		msg := fmt.Sprintf("Could not get NS: %s", in.Name)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.NvmeNamespace{Name: in.Name, Spec: &pb.NvmeNamespaceSpec{Nguid: result.Nguid}, Status: &pb.NvmeNamespaceStatus{PciState: 2, PciOperState: 1}}, nil
+	return &pb.NvmeNamespace{Name: in.Name,
+		Spec: &pb.NvmeNamespaceSpec{
+			Nguid: result.Nguid,
+		},
+		Status: &pb.NvmeNamespaceStatus{
+			State:     pb.NvmeNamespaceStatus_STATE_ENABLED,
+			OperState: pb.NvmeNamespaceStatus_OPER_STATE_ONLINE,
+		},
+	}, nil
 }
 
 // StatsNvmeNamespace gets an Nvme namespace stats
