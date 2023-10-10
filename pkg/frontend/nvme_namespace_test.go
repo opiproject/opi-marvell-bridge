@@ -129,8 +129,8 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 					Eui64:         1967554867335598546,
 				},
 				Status: &pb.NvmeNamespaceStatus{
-					PciState:     2,
-					PciOperState: 1,
+					State:     pb.NvmeNamespaceStatus_STATE_ENABLED,
+					OperState: pb.NvmeNamespaceStatus_OPER_STATE_ONLINE,
 				},
 			},
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0, "ns_instance_id": 17}}`, `{"id":%d,"error":{"code":0,"message":""},"result":{"status": 0}}`},
@@ -726,8 +726,8 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 					Nguid: "0x25f9cbc45d0f976fb9c1a14ff5aed4b0",
 				},
 				Status: &pb.NvmeNamespaceStatus{
-					PciState:     2,
-					PciOperState: 1,
+					State:     pb.NvmeNamespaceStatus_STATE_ENABLED,
+					OperState: pb.NvmeNamespaceStatus_OPER_STATE_ONLINE,
 				},
 			},
 			spdk:    []string{`{"jsonrpc":"2.0","id":%d,"result":{"status":0,"nguid":"0x25f9cbc45d0f976fb9c1a14ff5aed4b0","eui64":"0xa7632f80702e4242","uuid":"0xb35633240b77073b8b4ebda571120dfb","nmic":1,"bdev":"bdev01","num_ctrlrs":1,"ctrlr_id_list":[{"ctrlr_id":1}]}}`},
