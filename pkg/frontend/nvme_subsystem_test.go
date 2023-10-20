@@ -209,6 +209,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			_ = testEnv.opiSpdkServer.store.Set(testControllerName, &testControllerWithStatus)
 			_ = testEnv.opiSpdkServer.store.Set(testNamespaceName, &testNamespaceWithStatus)
 			if tt.exist {
+				testEnv.opiSpdkServer.ListHelper[testSubsystemName] = false
 				_ = testEnv.opiSpdkServer.store.Set(testSubsystemName, &testSubsystemWithStatus)
 				// testEnv.opiSpdkServer.Subsystems[testSubsystemID].Spec.Id = &pc.ObjectKey{Value: testSubsystemID}
 			}

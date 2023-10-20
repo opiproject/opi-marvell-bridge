@@ -223,6 +223,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
+			testEnv.opiSpdkServer.ListHelper[testControllerName] = false
 			_ = testEnv.opiSpdkServer.store.Set(testSubsystemName, &testSubsystemWithStatus)
 			_ = testEnv.opiSpdkServer.store.Set(testControllerName, &testControllerWithStatus)
 			if tt.exist {
@@ -353,6 +354,7 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
+			testEnv.opiSpdkServer.ListHelper[testControllerName] = false
 			_ = testEnv.opiSpdkServer.store.Set(testSubsystemName, &testSubsystemWithStatus)
 			_ = testEnv.opiSpdkServer.store.Set(testControllerName, &testControllerWithStatus)
 			_ = testEnv.opiSpdkServer.store.Set(testNamespaceName, &testNamespaceWithStatus)

@@ -13,6 +13,7 @@ import (
 	"path"
 	"sort"
 	"strconv"
+	"strings"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-marvell-bridge/pkg/models"
@@ -88,7 +89,19 @@ func (s *Server) CreateNvmeNamespace(ctx context.Context, in *pb.CreateNvmeNames
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	// Now, attach this new NS to ALL controllers
-	for _, c := range s.Controllers {
+	for key := range s.ListHelper {
+		if !strings.HasPrefix(key, subsys.Name+"/controllers") {
+			continue
+		}
+		c := new(pb.NvmeController)
+		ok, err := s.store.Get(key, c)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			err := status.Errorf(codes.NotFound, "unable to find key %s", key)
+			return nil, err
+		}
 		if utils.GetSubsystemIDFromNvmeName(c.Name) != utils.GetSubsystemIDFromNvmeName(in.Parent) {
 			continue
 		}
@@ -98,7 +111,7 @@ func (s *Server) CreateNvmeNamespace(ctx context.Context, in *pb.CreateNvmeNames
 			NsInstanceID: int(in.NvmeNamespace.Spec.HostNsid),
 		}
 		var result models.MrvlNvmCtrlrAttachNsResult
-		err := s.rpc.Call(ctx, "mrvl_nvm_ctrlr_attach_ns", &params, &result)
+		err = s.rpc.Call(ctx, "mrvl_nvm_ctrlr_attach_ns", &params, &result)
 		if err != nil {
 			return nil, err
 		}
@@ -112,6 +125,8 @@ func (s *Server) CreateNvmeNamespace(ctx context.Context, in *pb.CreateNvmeNames
 		State:     pb.NvmeNamespaceStatus_STATE_ENABLED,
 		OperState: pb.NvmeNamespaceStatus_OPER_STATE_ONLINE,
 	}
+	// save object to the database
+	s.ListHelper[in.NvmeNamespace.Name] = false
 	err = s.store.Set(in.NvmeNamespace.Name, response)
 	if err != nil {
 		return nil, err
@@ -152,7 +167,19 @@ func (s *Server) DeleteNvmeNamespace(ctx context.Context, in *pb.DeleteNvmeNames
 		return nil, err
 	}
 	// First, detach this NS from ALL controllers
-	for _, c := range s.Controllers {
+	for key := range s.ListHelper {
+		if !strings.HasPrefix(key, subsys.Name+"/controllers") {
+			continue
+		}
+		c := new(pb.NvmeController)
+		ok, err := s.store.Get(key, c)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			err := status.Errorf(codes.NotFound, "unable to find key %s", key)
+			return nil, err
+		}
 		if utils.GetSubsystemIDFromNvmeName(c.Name) != utils.GetSubsystemIDFromNvmeName(in.Name) {
 			continue
 		}
@@ -162,7 +189,7 @@ func (s *Server) DeleteNvmeNamespace(ctx context.Context, in *pb.DeleteNvmeNames
 			NsInstanceID: int(namespace.Spec.HostNsid),
 		}
 		var result models.MrvlNvmCtrlrDetachNsResult
-		err := s.rpc.Call(ctx, "mrvl_nvm_ctrlr_detach_ns", &params, &result)
+		err = s.rpc.Call(ctx, "mrvl_nvm_ctrlr_detach_ns", &params, &result)
 		if err != nil {
 			return nil, err
 		}
@@ -187,6 +214,7 @@ func (s *Server) DeleteNvmeNamespace(ctx context.Context, in *pb.DeleteNvmeNames
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	// remove from the Database
+	delete(s.ListHelper, namespace.Name)
 	err = s.store.Delete(namespace.Name)
 	if err != nil {
 		return nil, err
