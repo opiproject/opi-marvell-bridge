@@ -98,6 +98,8 @@ func (s *Server) CreateNvmeController(ctx context.Context, in *pb.CreateNvmeCont
 	response := utils.ProtoClone(in.NvmeController)
 	response.Spec.NvmeControllerId = proto.Int32(int32(result.CtrlrID))
 	response.Status = &pb.NvmeControllerStatus{Active: true}
+	// save object to the database
+	s.ListHelper[in.NvmeController.Name] = false
 	err = s.store.Set(in.NvmeController.Name, response)
 	if err != nil {
 		return nil, err
@@ -153,6 +155,7 @@ func (s *Server) DeleteNvmeController(ctx context.Context, in *pb.DeleteNvmeCont
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	// remove from the Database
+	delete(s.ListHelper, controller.Name)
 	err = s.store.Delete(controller.Name)
 	if err != nil {
 		return nil, err

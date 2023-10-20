@@ -18,6 +18,7 @@ import (
 // Server contains frontend related OPI services
 type Server struct {
 	pb.UnimplementedFrontendNvmeServiceServer
+	ListHelper map[string]bool
 	Pagination map[string]int
 	store      gokv.Store
 	rpc        spdk.JSONRPC
@@ -32,6 +33,7 @@ func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
 		log.Panic("nil for Store is not allowed")
 	}
 	return &Server{
+		ListHelper: make(map[string]bool),
 		Pagination: make(map[string]int),
 		store:      store,
 		rpc:        jsonRPC,

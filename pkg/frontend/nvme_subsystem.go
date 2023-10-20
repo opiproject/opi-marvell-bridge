@@ -12,6 +12,7 @@ import (
 	"log"
 	"path"
 	"sort"
+	"strings"
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -57,9 +58,21 @@ func (s *Server) CreateNvmeSubsystem(ctx context.Context, in *pb.CreateNvmeSubsy
 		return subsys, nil
 	}
 	// check if another object exists with same NQN, it is not allowed
-	for _, item := range s.Subsystems {
-		if in.NvmeSubsystem.Spec.Nqn == item.Spec.Nqn {
-			msg := fmt.Sprintf("Could not create NQN: %s since object %s with same NQN already exists", in.NvmeSubsystem.Spec.Nqn, item.Name)
+	for key := range s.ListHelper {
+		if !strings.HasPrefix(key, "//storage.opiproject.org/subsystems") {
+			continue
+		}
+		subsys := new(pb.NvmeSubsystem)
+		ok, err := s.store.Get(key, subsys)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			err := status.Errorf(codes.NotFound, "unable to find key %s", key)
+			return nil, err
+		}
+		if in.NvmeSubsystem.Spec.Nqn == subsys.Spec.Nqn {
+			msg := fmt.Sprintf("Could not create NQN: %s since object %s with same NQN already exists", in.NvmeSubsystem.Spec.Nqn, subsys.Name)
 			return nil, status.Errorf(codes.AlreadyExists, msg)
 		}
 	}
@@ -92,6 +105,8 @@ func (s *Server) CreateNvmeSubsystem(ctx context.Context, in *pb.CreateNvmeSubsy
 	log.Printf("Received from SPDK: %v", ver)
 	response := utils.ProtoClone(in.NvmeSubsystem)
 	response.Status = &pb.NvmeSubsystemStatus{FirmwareRevision: ver.Version}
+	// save object to the database
+	s.ListHelper[in.NvmeSubsystem.Name] = false
 	err = s.store.Set(in.NvmeSubsystem.Name, response)
 	if err != nil {
 		return nil, err
@@ -132,6 +147,7 @@ func (s *Server) DeleteNvmeSubsystem(ctx context.Context, in *pb.DeleteNvmeSubsy
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	// remove from the Database
+	delete(s.ListHelper, subsys.Name)
 	err = s.store.Delete(subsys.Name)
 	if err != nil {
 		return nil, err
