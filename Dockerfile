@@ -18,7 +18,7 @@ COPY pkg/ pkg/
 RUN go build -v -o /opi-marvell-bridge ./cmd/...
 
 # second stage to reduce image size
-FROM alpine:3.18
+FROM alpine:3.19
 RUN apk add --no-cache --no-check-certificate hwdata && rm -rf /var/cache/apk/*
 COPY --from=builder /opi-marvell-bridge /
 COPY --from=docker.io/fullstorydev/grpcurl:v1.8.9-alpine /bin/grpcurl /usr/local/bin/
