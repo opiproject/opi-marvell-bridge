@@ -74,7 +74,7 @@ func (s *Server) CreateNvmeNamespace(ctx context.Context, in *pb.CreateNvmeNames
 		Subnqn:      subsys.Spec.Nqn,
 		Nguid:       in.NvmeNamespace.Spec.Nguid,
 		Eui64:       strconv.FormatInt(in.NvmeNamespace.Spec.Eui64, 10),
-		UUID:        in.NvmeNamespace.Spec.Uuid.Value,
+		UUID:        in.NvmeNamespace.Spec.Uuid,
 		ShareEnable: 1,
 		Bdev:        in.NvmeNamespace.Spec.VolumeNameRef,
 	}

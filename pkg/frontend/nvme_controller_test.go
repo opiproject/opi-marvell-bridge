@@ -25,7 +25,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	spec := &pb.NvmeControllerSpec{
 		Endpoint:         testController.Spec.Endpoint,
-		Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+		Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 		NvmeControllerId: proto.Int32(1),
 		MaxNsq:           5,
 		MaxNcq:           6,
@@ -112,7 +112,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 				Name: testControllerName,
 				Spec: &pb.NvmeControllerSpec{
 					Endpoint:         testController.Spec.Endpoint,
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 					NvmeControllerId: proto.Int32(17),
 					MaxNsq:           5,
 					MaxNcq:           6,
@@ -124,7 +124,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 				Name: testControllerName,
 				Spec: &pb.NvmeControllerSpec{
 					Endpoint:         testController.Spec.Endpoint,
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 					NvmeControllerId: proto.Int32(17),
 					MaxNsq:           5,
 					MaxNcq:           6,
@@ -157,7 +157,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			in: &pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
 					Endpoint:         testController.Spec.Endpoint,
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 					NvmeControllerId: proto.Int32(1),
 				},
 			},
@@ -182,7 +182,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			id: testControllerID,
 			in: &pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 					NvmeControllerId: proto.Int32(1),
 				},
 			},
@@ -201,17 +201,17 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 						FabricsId: &pb.FabricsEndpoint{
 							Traddr:  "127.0.0.1",
 							Trsvcid: "4420",
-							Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+							Adrfam:  pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IPV4,
 						},
 					},
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 					NvmeControllerId: proto.Int32(1),
 				},
 			},
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.Unknown,
-			errMsg:  fmt.Sprintf("not supported transport type: %v", pb.NvmeTransportType_NVME_TRANSPORT_TCP),
+			errMsg:  fmt.Sprintf("not supported transport type: %v", pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP),
 			exist:   false,
 			subsys:  testSubsystemName,
 		},
@@ -223,10 +223,10 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 						FabricsId: &pb.FabricsEndpoint{
 							Traddr:  "127.0.0.1",
 							Trsvcid: "4420",
-							Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+							Adrfam:  pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IPV4,
 						},
 					},
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 					NvmeControllerId: proto.Int32(1),
 				},
 			},
@@ -396,7 +396,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 	spec := &pb.NvmeControllerSpec{
 		Endpoint:         testController.Spec.Endpoint,
-		Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+		Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 		NvmeControllerId: proto.Int32(1),
 		MaxNsq:           5,
 		MaxNcq:           6,
@@ -475,7 +475,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 				Name: testControllerName,
 				Spec: &pb.NvmeControllerSpec{
 					Endpoint:         testController.Spec.Endpoint,
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 					NvmeControllerId: proto.Int32(17),
 					MaxNsq:           5,
 					MaxNcq:           6,
@@ -487,7 +487,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 				Name: testControllerName,
 				Spec: &pb.NvmeControllerSpec{
 					Endpoint:         testController.Spec.Endpoint,
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 					NvmeControllerId: proto.Int32(17),
 					MaxNsq:           5,
 					MaxNcq:           6,
@@ -530,17 +530,17 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 						FabricsId: &pb.FabricsEndpoint{
 							Traddr:  "127.0.0.1",
 							Trsvcid: "4420",
-							Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+							Adrfam:  pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IPV4,
 						},
 					},
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 					NvmeControllerId: proto.Int32(1),
 				},
 			},
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.Unknown,
-			errMsg:  fmt.Sprintf("not supported transport type: %v", pb.NvmeTransportType_NVME_TRANSPORT_TCP),
+			errMsg:  fmt.Sprintf("not supported transport type: %v", pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP),
 		},
 		"not corresponding endpoint for pcie transport type": {
 			mask: nil,
@@ -550,10 +550,10 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 						FabricsId: &pb.FabricsEndpoint{
 							Traddr:  "127.0.0.1",
 							Trsvcid: "4420",
-							Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+							Adrfam:  pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IPV4,
 						},
 					},
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 					NvmeControllerId: proto.Int32(1),
 				},
 			},
