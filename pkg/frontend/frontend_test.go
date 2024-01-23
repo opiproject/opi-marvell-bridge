@@ -116,7 +116,7 @@ var (
 					VirtualFunction:  wrapperspb.Int32(2),
 					PortId:           wrapperspb.Int32(0)},
 			},
-			Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+			Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 			NvmeControllerId: proto.Int32(17),
 		},
 	}

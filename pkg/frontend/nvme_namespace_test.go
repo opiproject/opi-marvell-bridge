@@ -25,7 +25,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 	spec := &pb.NvmeNamespaceSpec{
 		HostNsid:      0,
 		VolumeNameRef: "Malloc1",
-		Uuid:          &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+		Uuid:          "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
 		Nguid:         "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
 		Eui64:         1967554867335598546,
 	}
@@ -113,7 +113,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 				Spec: &pb.NvmeNamespaceSpec{
 					HostNsid:      22,
 					VolumeNameRef: "Malloc1",
-					Uuid:          &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+					Uuid:          "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
 					Nguid:         "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
 					Eui64:         1967554867335598546,
 				},
@@ -123,7 +123,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 				Spec: &pb.NvmeNamespaceSpec{
 					HostNsid:      22,
 					VolumeNameRef: "Malloc1",
-					Uuid:          &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+					Uuid:          "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
 					Nguid:         "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
 					Eui64:         1967554867335598546,
 				},
