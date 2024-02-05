@@ -90,7 +90,7 @@ func (s *Server) CreateNvmeNamespace(ctx context.Context, in *pb.CreateNvmeNames
 	}
 	// Now, attach this new NS to ALL controllers
 	for key := range s.ListHelper {
-		if !strings.HasPrefix(key, subsys.Name+"/controllers") {
+		if !strings.HasPrefix(key, subsys.Name+"/nvmeControllers") {
 			continue
 		}
 		c := new(pb.NvmeController)
@@ -168,7 +168,7 @@ func (s *Server) DeleteNvmeNamespace(ctx context.Context, in *pb.DeleteNvmeNames
 	}
 	// First, detach this NS from ALL controllers
 	for key := range s.ListHelper {
-		if !strings.HasPrefix(key, subsys.Name+"/controllers") {
+		if !strings.HasPrefix(key, subsys.Name+"/nvmeControllers") {
 			continue
 		}
 		c := new(pb.NvmeController)
