@@ -38,6 +38,8 @@ import "github.com/opiproject/opi-marvell-bridge/pkg/frontend"
 
 ## Using docker
 
+Before initiating the bridge, the [Redis](https://redis.io/) and [Jaeger](https://www.jaegertracing.io/) services must be operational. To specify non-standard ports for these services, use the `--help` command with the binary to find out which parameters needs to be passed.
+
 on DPU/IPU (i.e. with IP=10.10.10.1) run
 
 ```bash
